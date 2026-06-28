@@ -96,6 +96,11 @@ export const discussionInput = z.object({
 export const discussionId = z.object({ id: z.string().min(1) })
 export const discussionApprove = z.object({ id: z.string().min(1), approve: z.boolean() })
 
+export const gitDiffArgs = z.object({ file: z.string().min(1), staged: z.boolean() })
+export const gitFileArg = z.object({ file: z.string().min(1) })
+export const gitCommitArgs = z.object({ message: z.string().min(1) })
+export const gitPrArgs = z.object({ title: z.string().min(1), body: z.string() })
+
 export const schemaByChannel = {
   'pty:create': ptyCreate,
   'pty:write': ptyWrite,
@@ -117,4 +122,9 @@ export const schemaByChannel = {
   'discussion:abort': discussionId,
   'discussion:delete': discussionId,
   'discussion:approve': discussionApprove,
+  'git:diff': gitDiffArgs,
+  'git:stage': gitFileArg,
+  'git:unstage': gitFileArg,
+  'git:commit': gitCommitArgs,
+  'git:createPR': gitPrArgs,
 } as const

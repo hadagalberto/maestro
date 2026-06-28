@@ -1,6 +1,7 @@
 import type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry } from './types'
 import type { Discussion, DiscussionEvent, TemplateKind } from './discussion/types'
 import type { QueenInfo } from './queen'
+import type { GitStatus, GitResult, PrResult } from './git'
 
 export interface ProjectState {
   currentProject: string | null
@@ -37,6 +38,14 @@ export interface IpcRequest {
   'discussion:delete': { args: { id: string }; result: void }
   'discussion:approve': { args: { id: string; approve: boolean }; result: void }
   'queen:info': { args: undefined; result: QueenInfo }
+  'git:status': { args: undefined; result: GitStatus }
+  'git:diff': { args: { file: string; staged: boolean }; result: string }
+  'git:stage': { args: { file: string }; result: GitResult }
+  'git:unstage': { args: { file: string }; result: GitResult }
+  'git:commit': { args: { message: string }; result: GitResult }
+  'git:push': { args: undefined; result: GitResult }
+  'git:createPR': { args: { title: string; body: string }; result: PrResult }
+  'git:suggestCommit': { args: undefined; result: { message: string } }
 }
 export type IpcChannel = keyof IpcRequest
 
@@ -59,3 +68,4 @@ export interface IpcEventById { 'discussion:event': DiscussionEvent }
 export type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry }
 export type { Discussion, DiscussionEvent, TemplateKind }
 export type { QueenInfo } from './queen'
+export type { GitStatus, GitFile, GitResult, PrResult } from './git'
