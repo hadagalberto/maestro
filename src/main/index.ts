@@ -39,6 +39,10 @@ const discussion = new DiscussionRunner({
 })
 const mailbox = new Mailbox()
 const agentTree = new AgentTree()
+ptyHost.onExit = (id, code) => {
+  const r = agentTree.markExited(id, code)
+  if (r?.parentId) mailbox.send({ from: 'system', to: r.parentId, text: `agent ${id} exited (code ${code})` })
+}
 const bridge = new RendererBridge(() => win?.webContents ?? null)
 let queen: QueenHandle | null = null
 function queenInfo(): QueenInfo {
@@ -82,7 +86,7 @@ app.whenReady().then(async () => {
     writeFileSync(queenFile, JSON.stringify({ url: queen.url, token: queen.token }, null, 2), { mode: 0o600 })
   } catch { /* non-fatal */ }
   registerIpc({
-    config, ptyHost, project, discussion, discussionStore,
+    config, ptyHost, project, discussion, discussionStore, agentTree,
     isTrustedSender: makeSenderGuard(DEV_URL, app.isPackaged),
     scrollback: { save: (id, data) => scrollbackMem.set(id, data), load: (id) => scrollbackMem.get(id) ?? null },
     queenInfo,

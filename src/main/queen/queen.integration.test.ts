@@ -52,6 +52,23 @@ describe('Queen integration (real MCP client)', () => {
     } finally { await h.close() }
   })
 
+  it('list_agents + await_agent via client', async () => {
+    const d = deps()
+    d.agentTree.open({ id: 'root', name: 'root', command: 'x' })
+    const auth = new QueenAuth('tok')
+    const h = await startQueen(d, auth)
+    try {
+      const { client, transport } = await connect(h.url, 'tok')
+      const list = await client.callTool({ name: 'list_agents', arguments: {} })
+      expect((list.content as { text: string }[])[0].text).toContain('root')
+      const p = client.callTool({ name: 'await_agent', arguments: { id: 'root', timeoutMs: 5000 } })
+      d.agentTree.markExited('root', 0)
+      const r = await p
+      expect((r.content as { text: string }[])[0].text).toContain('"exitCode":0')
+      await transport.close()
+    } finally { await h.close() }
+  })
+
   it('rejeita sem token', async () => {
     const h = await startQueen(deps(), new QueenAuth('tok'))
     try {

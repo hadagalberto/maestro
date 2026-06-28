@@ -9,6 +9,7 @@ import { scaffoldMaestroConfig } from './maestroConfig'
 import { isTrusted, canonical } from './trust'
 import { DiscussionRunner } from './discussion/discussionRunner'
 import { DiscussionStore } from './discussion/discussionStore'
+import type { AgentTree } from './queen/agentTree'
 
 export interface RouterDeps {
   config: ConfigStore
@@ -16,6 +17,7 @@ export interface RouterDeps {
   project: ProjectManager
   discussion: DiscussionRunner
   discussionStore: DiscussionStore
+  agentTree: AgentTree
   isTrustedSender: (e: Electron.IpcMainInvokeEvent | Electron.IpcMainEvent) => boolean
   scrollback: { save: (id: string, data: string) => void; load: (id: string) => string | null }
   queenInfo: () => QueenInfo
@@ -43,10 +45,11 @@ export function registerIpc(deps: RouterDeps): void {
       }
     }
     deps.ptyHost.spawn(a)
+    deps.agentTree.open({ id: a.id, name: a.name ?? a.command, command: a.command, parentId: a.parentId })
   })
   handle('pty:write', (a) => { deps.ptyHost.write(a.id, a.data) })
   handle('pty:resize', (a) => { deps.ptyHost.resize(a.id, a.cols, a.rows) })
-  handle('pty:kill', (a) => { deps.ptyHost.kill(a.id) })
+  handle('pty:kill', (a) => { deps.ptyHost.kill(a.id); deps.agentTree.close(a.id) })
   handle('config:get', () => deps.config.get())
   handle('config:set', (a) => { deps.config.set(a.patch) })
   handle('scrollback:save', (a) => { deps.scrollback.save(a.id, a.data) })

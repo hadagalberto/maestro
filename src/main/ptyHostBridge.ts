@@ -8,6 +8,7 @@ type OutMsg =
 
 export class PtyHostBridge {
   private proc: UtilityProcess | null = null
+  onExit: ((id: string, code: number) => void) | null = null
   constructor(private getWebContents: () => WebContents | null) {}
 
   start(): void {
@@ -15,6 +16,7 @@ export class PtyHostBridge {
     const entry = join(__dirname, 'ptyHostEntry.js')
     this.proc = utilityProcess.fork(entry, [], { stdio: 'inherit' })
     this.proc.on('message', (m: OutMsg) => {
+      if (m.type === 'exit') this.onExit?.(m.id, m.code)
       const wc = this.getWebContents()
       if (!wc || wc.isDestroyed()) return
       if (m.type === 'data') wc.send(ptyDataChannel(m.id), { data: m.data })
