@@ -41,8 +41,11 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
       if (typeof saved === 'string' && saved) term.write(saved)
       term.open(el!)
       fit.fit()
+      term.focus()
 
-      if (canEnableWebgl(pane.id)) {
+      // pula WebGL sob automação (Playwright seta navigator.webdriver): o renderer DOM
+      // deixa o texto do terminal inspecionável no E2E. Sem efeito pro usuário real.
+      if (!navigator.webdriver && canEnableWebgl(pane.id)) {
         try {
           const addon = new WebglAddon()
           addon.onContextLoss(() => { addon.dispose(); webgl = null; releaseWebgl(pane.id) })
@@ -72,9 +75,13 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
     })
     ro.observe(el)
 
+    const focusOnDown = () => term.focus()
+    el.addEventListener('mousedown', focusOnDown)
+
     return () => {
       disposed = true
       ro.disconnect()
+      el.removeEventListener('mousedown', focusOnDown)
       void window.term.invoke('scrollback:save', { id: pane.id, data: serialize.serialize() })
       cleanupData(); cleanupExit()
       webgl?.dispose(); releaseWebgl(pane.id)

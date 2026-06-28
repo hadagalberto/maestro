@@ -4,7 +4,6 @@
   "description": "Desktop app para orquestrar CLIs de IA em grid de terminais",
   "main": "out/main/index.js",
   "scripts": {
-    "postinstall": "electron-rebuild -f -w node-pty",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
