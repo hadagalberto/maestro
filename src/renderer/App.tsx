@@ -9,6 +9,7 @@ import { DiscussionsButton } from './ui/DiscussionsButton'
 import { NewDiscussionModal } from './ui/NewDiscussionModal'
 import { DiscussionList } from './ui/DiscussionList'
 import { DiscussionView } from './ui/DiscussionView'
+import { QueenPanel } from './ui/QueenPanel'
 import { Grid } from './grid/Grid'
 import { useGrid } from './store/gridStore'
 import { useProject } from './store/projectStore'
@@ -31,6 +32,7 @@ export function App() {
   const [showModal, setShowModal] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
   const [showDiscussions, setShowDiscussions] = useState(false)
+  const [showQueen, setShowQueen] = useState(false)
   const refreshDiscussions = useDiscussions((s) => s.refresh)
 
   useEffect(() => {
@@ -71,6 +73,7 @@ export function App() {
       <div className="flex items-center gap-2 border-b border-zinc-800 px-3 py-1">
         <DiscussionsButton onClick={() => { setShowDiscussions((v) => !v); void refreshDiscussions() }} />
         <button onClick={() => setShowModal(true)} className="rounded bg-amber-700/70 px-2 py-0.5 text-xs text-white">+ discussão</button>
+        <button onClick={() => setShowQueen(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Queen</button>
       </div>
       <Toolbar onPickProfile={pickProfile} />
       <div className="flex min-h-0 flex-1">
@@ -82,6 +85,7 @@ export function App() {
       <button onClick={() => setShowGlobals(true)} className="absolute bottom-2 left-2 z-40 rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">perfis globais</button>
       {showGlobals && <GlobalProfiles onClose={() => setShowGlobals(false)} />}
       {showModal && <NewDiscussionModal onClose={() => setShowModal(false)} onStarted={(id) => { setShowModal(false); setShowDiscussions(true); setOpenId(id); void refreshDiscussions() }} />}
+      {showQueen && <QueenPanel onClose={() => setShowQueen(false)} />}
     </div>
   )
 }
