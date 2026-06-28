@@ -24,7 +24,7 @@ const discussionStore = new DiscussionStore()
 const discussion = new DiscussionRunner({
   store: discussionStore,
   makeAdapter: () => new CliAdapter((pid) => project.effectiveEntries()[pid]),
-  resolveProfiles: () => project.effectiveEntries(),
+  projectProfileIds: () => project.projectEntryIds(),
   projectRoot: () => config.get().currentProject,
   isTrusted: (root) => isTrusted(root, config.get().trust),
   emit: (id, ev) => { if (win && !win.webContents.isDestroyed()) win.webContents.send(discussionEventChannel(id), ev) },

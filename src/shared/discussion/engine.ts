@@ -75,7 +75,7 @@ export async function* runDiscussion(input: DiscussionInput, deps: RunDeps): Asy
 
       const runOne = async (p: typeof pending[number]) => {
         const { system, prompt } = phase.template(buildContext(input, phase, round, p.sp.role, transcript))
-        const req: AgentTurnRequest = { participantId: p.sp.id, profileId: p.sp.profileId, role: p.sp.role, system, prompt, cwd: '.', signal }
+        const req: AgentTurnRequest = { participantId: p.sp.id, profileId: p.sp.profileId, role: p.sp.role, system, prompt, cwd: input.cwd ?? '.', signal }
         const r = await capture(adapter, req)
         p.turn.text = r.text; p.turn.error = r.error; p.turn.createdAt = now()
       }
@@ -97,13 +97,13 @@ export async function* runDiscussion(input: DiscussionInput, deps: RunDeps): Asy
       yield { type: 'turn-start', turn: { id: synth.id, phaseId: synth.phaseId, participantId: synth.participantId, role: synth.role, round: synth.round } }
       const ctx = buildContext(input, phase, rounds, 'orchestrator', transcript)
       const first = phase.synthesize.template(ctx)
-      const r1 = await capture(adapter, { participantId: input.orchestrator.id, profileId: input.orchestrator.profileId, role: 'orchestrator', system: first.system, prompt: first.prompt, cwd: '.', signal })
+      const r1 = await capture(adapter, { participantId: input.orchestrator.id, profileId: input.orchestrator.profileId, role: 'orchestrator', system: first.system, prompt: first.prompt, cwd: input.cwd ?? '.', signal })
       synth.text = r1.text; synth.error = r1.error; synth.createdAt = now()
       transcript.push(synth); yield { type: 'synthesis', turn: synth }
 
       let card = parseCard(synth.text, phase.synthesize.card)
       if (!card) {
-        const r2 = await capture(adapter, { participantId: input.orchestrator.id, profileId: input.orchestrator.profileId, role: 'orchestrator', prompt: `${first.prompt}\n\nReturn ONLY the JSON object, nothing else.`, system: first.system, cwd: '.', signal })
+        const r2 = await capture(adapter, { participantId: input.orchestrator.id, profileId: input.orchestrator.profileId, role: 'orchestrator', prompt: `${first.prompt}\n\nReturn ONLY the JSON object, nothing else.`, system: first.system, cwd: input.cwd ?? '.', signal })
         card = parseCard(r2.text, phase.synthesize.card) ?? noteCard(synth.text, phase.synthesize.card, phase.label)
       }
       cards.push(card); yield { type: 'card', card }

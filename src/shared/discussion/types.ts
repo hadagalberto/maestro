@@ -72,7 +72,7 @@ export interface AgentAdapter { run(req: AgentTurnRequest): AsyncIterable<AgentC
 
 // engine deps + input
 export interface RunDeps { adapter: AgentAdapter; now: () => number; ids: () => string; signal: AbortSignal }
-export interface DiscussionInput { topic: string; flow: FlowSpec; participants: Participant[]; orchestrator: Participant; autonomous: boolean }
+export interface DiscussionInput { topic: string; flow: FlowSpec; participants: Participant[]; orchestrator: Participant; autonomous: boolean; cwd?: string }
 
 // per-profile headless invocation config
 export interface DiscussInvoke {

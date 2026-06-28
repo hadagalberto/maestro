@@ -15,7 +15,7 @@ describe('DiscussionRunner', () => {
     const runner = new DiscussionRunner({
       store,
       makeAdapter: () => new MockAdapter((req) => req.role === 'orchestrator' ? '{"kind":"decision","title":"t","body":"b"}' : 'pos'),
-      resolveProfiles: () => ({ a: { command: 'a' }, b: { command: 'b' } }),
+      projectProfileIds: () => [],
       projectRoot: () => null,
       isTrusted: () => true,
       emit: (id, ev) => events.push({ id, type: ev.type }),
@@ -33,7 +33,7 @@ describe('DiscussionRunner', () => {
     const store = fakeStore()
     const runner = new DiscussionRunner({
       store, makeAdapter: () => new MockAdapter(() => 'x'),
-      resolveProfiles: () => ({ a: { command: 'a' }, b: { command: 'b' } }),
+      projectProfileIds: () => ['a', 'b'],
       projectRoot: () => '/proj', isTrusted: () => false,
       emit: () => {}, now: () => 1, ids: () => 'x',
     })

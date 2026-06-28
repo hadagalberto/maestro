@@ -48,5 +48,7 @@ export class ProjectManager {
     return { ...PROFILE_PRESETS, ...this.config.get().globalProfiles, ...this.projectEntries }
   }
 
+  projectEntryIds(): string[] { return Object.keys(this.projectEntries) }
+
   stop(): void { this.watcher.stop() }
 }

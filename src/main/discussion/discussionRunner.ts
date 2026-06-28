@@ -1,13 +1,12 @@
 import { runDiscussion } from '@shared/discussion/engine'
 import { assignRoles, buildFlow } from '@shared/discussion/templates'
 import type { AgentAdapter, Discussion, DiscussionEvent, DiscussionInput } from '@shared/discussion/types'
-import type { ProfileEntry } from '@shared/types'
 import { TRUST_REQUIRED } from '@shared/ipc'
 
 export interface RunnerDeps {
   store: { list(): Discussion[]; get(id: string): Discussion | null; upsert(d: Discussion): void; delete(id: string): void }
   makeAdapter: () => AgentAdapter
-  resolveProfiles: () => Record<string, ProfileEntry>
+  projectProfileIds: () => string[]
   projectRoot: () => string | null
   isTrusted: (root: string) => boolean
   emit: (id: string, ev: DiscussionEvent) => void
@@ -24,17 +23,17 @@ export class DiscussionRunner {
   constructor(private deps: RunnerDeps) {}
 
   async start(a: StartArgs): Promise<{ id: string }> {
-    this.deps.resolveProfiles()
     const root = this.deps.projectRoot()
     const usedIds = [a.orchestratorProfileId, ...a.participantProfileIds]
-    const anyProject = usedIds.some(() => root != null)
-    if (root && anyProject && !this.deps.isTrusted(root)) throw new Error(TRUST_REQUIRED)
+    const projectIds = this.deps.projectProfileIds()
+    const usesProjectProfile = usedIds.some((id) => projectIds.includes(id))
+    if (root && usesProjectProfile && !this.deps.isTrusted(root)) throw new Error(TRUST_REQUIRED)
 
     const id = this.deps.ids()
     const participants = assignRoles(a.templateKind, a.participantProfileIds)
     const orchestrator = { id: this.deps.ids(), role: 'orchestrator', profileId: a.orchestratorProfileId }
     const flow = buildFlow(a.templateKind, participants)
-    const input: DiscussionInput = { topic: a.topic, flow, participants, orchestrator, autonomous: a.autonomous }
+    const input: DiscussionInput = { topic: a.topic, flow, participants, orchestrator, autonomous: a.autonomous, cwd: root ?? '.' }
 
     const disc: Discussion = {
       id, topic: a.topic, templateKind: a.templateKind, orchestratorProfileId: a.orchestratorProfileId,
@@ -74,8 +73,11 @@ export class DiscussionRunner {
     } finally { this.aborts.delete(id) }
   }
 
-  abort(id: string): void { this.aborts.get(id)?.abort() }
+  abort(id: string): void {
+    this.aborts.get(id)?.abort()
+    this.approvals.get(id)?.({ approve: false })   // unblock an awaiting-approval gate so the loop can finish
+  }
   approve(id: string, approve: boolean): void { this.approvals.get(id)?.({ approve }) }
-  abortAll(): void { for (const ac of this.aborts.values()) ac.abort() }
+  abortAll(): void { for (const id of this.aborts.keys()) this.abort(id) }
   waitFor(id: string): Promise<void> { return this.done.get(id) ?? Promise.resolve() }
 }
