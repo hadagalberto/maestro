@@ -4,6 +4,7 @@ import type { Mailbox } from './mailbox'
 import type { RendererBridge } from './rendererBridge'
 import type { Discussion } from '@shared/discussion/types'
 import type { ProfileEntry } from '@shared/types'
+import type { AgentTree } from './agentTree'
 
 export interface QueenToolDeps {
   discussionRunner: { start(a: { topic: string; templateKind: Discussion['templateKind']; orchestratorProfileId: string; participantProfileIds: string[]; autonomous: boolean }): Promise<{ id: string }> }
@@ -14,6 +15,7 @@ export interface QueenToolDeps {
   mailbox: Mailbox
   bridge: Pick<RendererBridge, 'request'>
   notify: (title: string, body: string) => void
+  agentTree: AgentTree
 }
 
 type ToolResult = { content: { type: 'text'; text: string }[]; isError?: boolean }
@@ -69,6 +71,22 @@ export function registerQueenTools(mcp: McpServer, deps: QueenToolDeps): Record<
 
   reg('project_info', { title: 'Project info', description: 'Current project path and trust status', inputSchema: {} },
     () => { const root = deps.currentProject(); return json({ currentProject: root, trusted: root == null ? true : deps.isTrusted(root) }) })
+
+  reg('spawn_sub_agent', { title: 'Spawn sub-agent', description: 'Spawn a child terminal under a parent agent (use your own MAESTRO_TERMINAL_ID as parentId)', inputSchema: { parentId: z.string(), profileId: z.string().optional(), command: z.string().optional(), name: z.string().optional() } },
+    async (a) => { if (!trusted()) return trustErr(); return json(await deps.bridge.request('terminals.spawn', { profileId: a.profileId, command: a.command, name: a.name, parentId: a.parentId })) })
+
+  reg('list_agents', { title: 'List agents', description: 'Get the agent/terminal hierarchy (tree)', inputSchema: {} },
+    () => json(deps.agentTree.tree()))
+
+  reg('await_agent', { title: 'Await agent', description: 'Wait until an agent (terminal) exits; returns exit code and recent output', inputSchema: { id: z.string(), timeoutMs: z.number().int().positive().optional() } },
+    async (a) => {
+      const r = await deps.agentTree.awaitExit(a.id as string, (a.timeoutMs as number) ?? 120_000)
+      if (r === 'timeout') return err('timeout waiting for agent')
+      if (r === 'gone') return err('agent not found')
+      let output = ''
+      try { output = String(await deps.bridge.request('terminals.read', { id: a.id })) } catch { /* best-effort */ }
+      return json({ exitCode: r.exitCode, output })
+    })
 
   return handlers
 }

@@ -4,6 +4,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { startQueen } from './server'
 import { QueenAuth } from './auth'
 import { Mailbox } from './mailbox'
+import { AgentTree } from './agentTree'
 
 function deps(notify = vi.fn()) {
   return {
@@ -13,8 +14,9 @@ function deps(notify = vi.fn()) {
     currentProject: () => null,
     isTrusted: () => true,
     mailbox: new Mailbox(() => 'm1', () => 1),
-    bridge: { request: vi.fn() },
+    bridge: { request: vi.fn().mockResolvedValue('') },
     notify,
+    agentTree: new AgentTree(() => 1),
   }
 }
 
@@ -34,7 +36,7 @@ describe('Queen integration (real MCP client)', () => {
       const { client, transport } = await connect(h.url, 'tok')
       const tools = await client.listTools()
       expect(tools.tools.map((t) => t.name)).toContain('notify')
-      expect(tools.tools.length).toBe(13)
+      expect(tools.tools.length).toBe(16)
 
       await client.callTool({ name: 'notify', arguments: { title: 'T', body: 'B' } })
       expect(notify).toHaveBeenCalledWith('T', 'B')

@@ -12,6 +12,7 @@ import { isTrusted } from './trust'
 import { startQueen, type QueenHandle } from './queen/server'
 import { RendererBridge } from './queen/rendererBridge'
 import { Mailbox } from './queen/mailbox'
+import { AgentTree } from './queen/agentTree'
 import { discussionEventChannel, type ProjectState } from '@shared/ipc'
 import type { QueenInfo } from '@shared/queen'
 import { randomUUID } from 'node:crypto'
@@ -37,6 +38,7 @@ const discussion = new DiscussionRunner({
   ids: () => randomUUID(),
 })
 const mailbox = new Mailbox()
+const agentTree = new AgentTree()
 const bridge = new RendererBridge(() => win?.webContents ?? null)
 let queen: QueenHandle | null = null
 function queenInfo(): QueenInfo {
@@ -72,6 +74,7 @@ app.whenReady().then(async () => {
     mailbox,
     bridge,
     notify: (title, body) => { new Notification({ title, body }).show() },
+    agentTree,
   })
   // publish url+token for agents/users (the panel references this file)
   try {
