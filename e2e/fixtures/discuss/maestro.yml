@@ -1,0 +1,20 @@
+version: 1
+profiles:
+  pro:
+    name: Pro
+    command: node
+    color: "#3fb950"
+    discuss:
+      argsTemplate: ["-e", "process.stdout.write('PRO: spaces are better')"]
+  con:
+    name: Con
+    command: node
+    color: "#ff7b72"
+    discuss:
+      argsTemplate: ["-e", "process.stdout.write('CON: tabs are better')"]
+  orch:
+    name: Orchestrator
+    command: node
+    color: "#d97757"
+    discuss:
+      argsTemplate: ["-e", "process.stdout.write(JSON.stringify({kind:'decision',title:'Decisão',body:'spaces vencem',dissents:['con discorda']}))"]

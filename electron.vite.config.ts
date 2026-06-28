@@ -8,7 +8,10 @@ const alias = { '@shared': resolve('src/shared') }
 export default defineConfig({
   main: {
     resolve: { alias },
-    plugins: [externalizeDepsPlugin()],
+    // strip-ansi (and its dep ansi-regex) are ESM-only; externalizing them leaves a
+    // bare require() in the CJS main bundle which throws ERR_REQUIRE_ESM at runtime.
+    // Bundle them instead so they are emitted as CJS-compatible code.
+    plugins: [externalizeDepsPlugin({ exclude: ['strip-ansi', 'ansi-regex'] })],
     build: {
       rollupOptions: {
         input: {
