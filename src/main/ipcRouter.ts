@@ -10,6 +10,7 @@ import { isTrusted, canonical } from './trust'
 import { DiscussionRunner } from './discussion/discussionRunner'
 import { DiscussionStore } from './discussion/discussionStore'
 import type { AgentTree } from './queen/agentTree'
+import type { GitService } from './git/gitService'
 
 export interface RouterDeps {
   config: ConfigStore
@@ -22,6 +23,9 @@ export interface RouterDeps {
   scrollback: { save: (id: string, data: string) => void; load: (id: string) => string | null }
   queenInfo: () => QueenInfo
   bridge: { handleResponse: (r: QueenResponse) => void }
+  git: GitService
+  currentProjectRoot: () => string | null
+  suggestProfile: () => { command: string; args: string[] } | null   // AI cmd+args for commit suggestion
 }
 
 type Handler<C extends IpcChannel> = (args: IpcRequest[C]['args'], e: IpcMainInvokeEvent) => IpcRequest[C]['result'] | Promise<IpcRequest[C]['result']>
@@ -82,6 +86,21 @@ export function registerIpc(deps: RouterDeps): void {
 
   handle('queen:info', () => deps.queenInfo())
   ipcMain.on('queen:res', (e, r) => { if (deps.isTrustedSender(e)) deps.bridge.handleResponse(r) })
+
+  const root = () => deps.currentProjectRoot()
+  const noRoot = { ok: false, message: 'nenhum projeto aberto' }
+  handle('git:status', async () => { const r = root(); return r ? deps.git.status(r) : { isRepo: false, branch: null, ahead: 0, behind: 0, staged: [], unstaged: [], hasRemote: false } })
+  handle('git:diff', async (a) => { const r = root(); return r ? deps.git.diff(r, a.file, a.staged) : '' })
+  handle('git:stage', async (a) => { const r = root(); return r ? deps.git.stage(r, a.file) : noRoot })
+  handle('git:unstage', async (a) => { const r = root(); return r ? deps.git.unstage(r, a.file) : noRoot })
+  handle('git:commit', async (a) => { const r = root(); return r ? deps.git.commit(r, a.message) : noRoot })
+  handle('git:push', async () => { const r = root(); return r ? deps.git.push(r) : noRoot })
+  handle('git:createPR', async (a) => { const r = root(); return r ? deps.git.createPR(r, a.title, a.body) : { ok: false, message: 'nenhum projeto aberto' } })
+  handle('git:suggestCommit', async () => {
+    const r = root(); if (!r) return { message: '' }
+    const p = deps.suggestProfile(); if (!p) return { message: '' }
+    return { message: await deps.git.suggestCommit(r, p.command, p.args) }
+  })
 }
 
 export function makeSenderGuard(devUrl: string, isPackaged: boolean) {

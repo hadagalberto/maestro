@@ -13,6 +13,7 @@ import { startQueen, type QueenHandle } from './queen/server'
 import { RendererBridge } from './queen/rendererBridge'
 import { Mailbox } from './queen/mailbox'
 import { AgentTree } from './queen/agentTree'
+import { GitService } from './git/gitService'
 import { discussionEventChannel, type ProjectState } from '@shared/ipc'
 import type { QueenInfo } from '@shared/queen'
 import { randomUUID } from 'node:crypto'
@@ -39,6 +40,7 @@ const discussion = new DiscussionRunner({
 })
 const mailbox = new Mailbox()
 const agentTree = new AgentTree()
+const git = new GitService()
 ptyHost.onExit = (id, code) => {
   const r = agentTree.markExited(id, code)
   if (r?.parentId) mailbox.send({ from: 'system', to: r.parentId, text: `agent ${id} exited (code ${code})` })
@@ -91,6 +93,14 @@ app.whenReady().then(async () => {
     scrollback: { save: (id, data) => scrollbackMem.set(id, data), load: (id) => scrollbackMem.get(id) ?? null },
     queenInfo,
     bridge,
+    git,
+    currentProjectRoot: () => config.get().currentProject,
+    suggestProfile: () => {
+      const entries = project.effectiveEntries()
+      const e = entries['claude'] ?? Object.values(entries).find((x) => x.discuss)
+      if (!e?.discuss) return null
+      return { command: e.command, args: [...(e.args ?? []), ...e.discuss.argsTemplate] }
+    },
   })
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
