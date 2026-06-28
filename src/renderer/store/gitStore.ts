@@ -14,6 +14,7 @@ interface GitStore {
   commit: (message: string) => Promise<boolean>
   push: () => Promise<void>
   suggest: () => Promise<string>
+  createPR: (title: string, body: string) => Promise<import('@shared/git').PrResult>
 }
 
 export const useGit = create<GitStore>((set, get) => ({
@@ -25,4 +26,9 @@ export const useGit = create<GitStore>((set, get) => ({
   commit: async (message) => { const r = await window.term.invoke('git:commit', { message }); if (!r.ok) { set({ error: r.message ?? 'commit falhou' }); return false } await get().refresh(); return true },
   push: async () => { const r = await window.term.invoke('git:push', undefined); if (!r.ok) set({ error: r.message ?? 'push falhou' }); else await get().refresh() },
   suggest: async () => { const r = await window.term.invoke('git:suggestCommit', undefined); return r.message },
+  createPR: async (title, body) => {
+    const r = await window.term.invoke('git:createPR', { title, body })
+    if (!r.ok) set({ error: r.message ?? 'criar PR falhou' })
+    return r
+  },
 }))

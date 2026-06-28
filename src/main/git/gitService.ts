@@ -45,8 +45,7 @@ export class GitService {
 
   async diff(root: string, file: string, staged: boolean): Promise<string> {
     const args = staged ? ['diff', '--cached', '--', file] : ['diff', '--', file]
-    const r = await this.run('git', args, root)
-    return r.stdout || (await this.run('git', ['diff', ...(staged ? ['--cached'] : []), '--no-color', '--', file], root)).stdout
+    return (await this.run('git', args, root)).stdout
   }
   async stage(root: string, file: string): Promise<GitResult> { return this.result(await this.run('git', ['add', '--', file], root)) }
   async unstage(root: string, file: string): Promise<GitResult> { return this.result(await this.run('git', ['restore', '--staged', '--', file], root)) }

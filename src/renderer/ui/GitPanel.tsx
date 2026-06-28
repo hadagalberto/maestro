@@ -6,9 +6,13 @@ import type { GitFile } from '@shared/git'
 const statusBadge: Record<string, string> = { modified: 'M', added: 'A', deleted: 'D', renamed: 'R', untracked: 'U', conflicted: '!' }
 
 export function GitPanel({ onClose }: { onClose: () => void }) {
-  const { status, diff, selected, error, refresh, select, stage, unstage, commit, push, suggest } = useGit()
+  const { status, diff, selected, error, refresh, select, stage, unstage, commit, push, suggest, createPR } = useGit()
   const [msg, setMsg] = useState('')
   const [busyMsg, setBusyMsg] = useState(false)
+  const [prOpen, setPrOpen] = useState(false)
+  const [prTitle, setPrTitle] = useState('')
+  const [prBody, setPrBody] = useState('')
+  const [prUrl, setPrUrl] = useState('')
   useEffect(() => { void refresh() }, [refresh])
 
   const fileRow = (f: GitFile) => (
@@ -22,6 +26,7 @@ export function GitPanel({ onClose }: { onClose: () => void }) {
   )
 
   async function askAI() { setBusyMsg(true); try { const m = await suggest(); if (m) setMsg(m) } finally { setBusyMsg(false) } }
+  async function submitPR() { const r = await createPR(prTitle, prBody); if (r.ok) { setPrUrl(r.url ?? ''); setPrOpen(false); setPrTitle(''); setPrBody('') } }
 
   return (
     <div className="absolute inset-0 z-50 flex bg-black/40" onClick={onClose}>
@@ -47,7 +52,19 @@ export function GitPanel({ onClose }: { onClose: () => void }) {
                 <button onClick={askAI} disabled={busyMsg} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-sky-300">{busyMsg ? '…' : 'Ask AI'}</button>
                 <button onClick={() => { void commit(msg).then((ok) => ok && setMsg('')) }} disabled={!msg.trim() || !status?.staged?.length} className="rounded bg-emerald-700 px-2 py-0.5 text-xs text-white disabled:opacity-40">Commit</button>
                 <button onClick={() => void push()} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Push</button>
+                <button onClick={() => setPrOpen((o) => !o)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Create PR</button>
               </div>
+              {prOpen && (
+                <div className="mt-1 rounded border border-zinc-800 p-1">
+                  <input value={prTitle} onChange={(e) => setPrTitle(e.target.value)} placeholder="título do PR" className="mb-1 w-full rounded bg-zinc-800 p-1 text-xs" />
+                  <textarea value={prBody} onChange={(e) => setPrBody(e.target.value)} rows={2} placeholder="descrição do PR" className="mb-1 w-full rounded bg-zinc-800 p-1 text-xs" />
+                  <div className="flex gap-1">
+                    <button onClick={() => void submitPR()} disabled={!prTitle.trim()} className="rounded bg-emerald-700 px-2 py-0.5 text-xs text-white disabled:opacity-40">Criar</button>
+                    <button onClick={() => setPrOpen(false)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Cancelar</button>
+                  </div>
+                </div>
+              )}
+              {prUrl && <div className="mt-1 truncate text-xs text-sky-300">PR: <a href={prUrl} target="_blank" rel="noreferrer" className="underline">{prUrl}</a></div>}
             </div>
           </div>
         </div>
