@@ -17,7 +17,33 @@ export const ptyCreate = z.object({
 export const ptyWrite = z.object({ id: z.string().min(1), data: z.string() })
 export const ptyResize = z.object({ id: z.string().min(1), cols: z.number().int().positive(), rows: z.number().int().positive() })
 export const ptyKill = z.object({ id: z.string().min(1) })
-export const configSet = z.object({ patch: z.record(z.string(), z.unknown()) })
+const layoutKindSchema = z.enum(['two', 'three', 'quad'])
+const paneConfigSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  command: z.string().min(1),
+  args: z.array(z.string()).optional(),
+  cwd: z.string(),
+  env: z.record(z.string(), z.string()).optional(),
+  color: z.string().optional(),
+  profileId: z.string().optional(),
+  origin: z.enum(['user', 'project']).optional(),
+  projectRoot: z.string().optional(),
+})
+const settingsPatchSchema = z.object({
+  fontFamily: z.string(),
+  fontSize: z.number(),
+  scrollback: z.number(),
+  theme: z.enum(['system', 'light', 'dark']),
+}).partial()
+export const configSet = z.object({
+  patch: z.object({
+    panes: z.array(paneConfigSchema).optional(),
+    activeLayout: layoutKindSchema.optional(),
+    layoutSizes: z.record(z.string(), z.array(z.number())).optional(),
+    settings: settingsPatchSchema.optional(),
+  }),
+})
 export const scrollbackSave = z.object({ id: z.string().min(1), data: z.string() })
 export const scrollbackLoad = z.object({ id: z.string().min(1) })
 export const shellOpen = z.object({ url: z.url() })

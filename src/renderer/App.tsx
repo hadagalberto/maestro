@@ -54,6 +54,9 @@ export function App() {
   }
   function pickProfile(p: Profile) { addPane(paneFromProfile(p)) }
 
+  // reset autoStart guard when project changes so a reused profile id can autostart again
+  useEffect(() => { autoStarted.current = new Set() }, [project.currentProject])
+
   // autoStart project profiles once, when trusted
   useEffect(() => {
     if (!project.trusted || !project.currentProject) return

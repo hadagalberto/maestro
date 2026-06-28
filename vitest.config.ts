@@ -15,7 +15,8 @@ export default defineConfig({
         test: { name: 'unit', environment: 'node', include: ['src/**/*.test.ts'] },
       },
       {
-        resolve: { alias },
+        resolve: { alias, dedupe: ['react', 'react-dom'] },
+        optimizeDeps: { include: ['react', 'react-dom', 'react/jsx-dev-runtime', 'zustand'] },
         test: {
           name: 'pane',
           include: ['src/**/*.browser.test.tsx'],
