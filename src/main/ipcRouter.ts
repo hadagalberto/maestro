@@ -6,11 +6,15 @@ import { PtyHostBridge } from './ptyHostBridge'
 import { ProjectManager } from './projectManager'
 import { scaffoldMaestroConfig } from './maestroConfig'
 import { isTrusted, canonical } from './trust'
+import { DiscussionRunner } from './discussion/discussionRunner'
+import { DiscussionStore } from './discussion/discussionStore'
 
 export interface RouterDeps {
   config: ConfigStore
   ptyHost: PtyHostBridge
   project: ProjectManager
+  discussion: DiscussionRunner
+  discussionStore: DiscussionStore
   isTrustedSender: (e: IpcMainInvokeEvent) => boolean
   scrollback: { save: (id: string, data: string) => void; load: (id: string) => string | null }
 }
@@ -62,6 +66,13 @@ export function registerIpc(deps: RouterDeps): void {
     deps.config.grantTrust(parent); return deps.project.state()
   })
   handle('trust:revoke', async (a) => { deps.config.revokeTrust(canonical(a.path)); return deps.project.state() })
+
+  handle('discussion:start', (a) => deps.discussion.start(a))
+  handle('discussion:list', () => deps.discussionStore.list())
+  handle('discussion:get', (a) => deps.discussionStore.get(a.id))
+  handle('discussion:abort', (a) => { deps.discussion.abort(a.id) })
+  handle('discussion:delete', (a) => { deps.discussion.abort(a.id); deps.discussionStore.delete(a.id) })
+  handle('discussion:approve', (a) => { deps.discussion.approve(a.id, a.approve) })
 }
 
 export function makeSenderGuard(devUrl: string, isPackaged: boolean) {

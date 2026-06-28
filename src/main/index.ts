@@ -4,7 +4,12 @@ import { ConfigStore } from './configStore'
 import { PtyHostBridge } from './ptyHostBridge'
 import { ProjectManager } from './projectManager'
 import { registerIpc, makeSenderGuard } from './ipcRouter'
-import type { ProjectState } from '@shared/ipc'
+import { DiscussionStore } from './discussion/discussionStore'
+import { DiscussionRunner } from './discussion/discussionRunner'
+import { CliAdapter } from './discussion/cliAdapter'
+import { isTrusted } from './trust'
+import { discussionEventChannel, type ProjectState } from '@shared/ipc'
+import { randomUUID } from 'node:crypto'
 
 const DEV_URL = process.env['ELECTRON_RENDERER_URL'] ?? 'http://localhost:5173'
 const scrollbackMem = new Map<string, string>()
@@ -14,6 +19,17 @@ const config = new ConfigStore()
 const ptyHost = new PtyHostBridge(() => win?.webContents ?? null)
 const project = new ProjectManager(config, (s: ProjectState) => {
   if (win && !win.webContents.isDestroyed()) win.webContents.send('project:changed', s)
+})
+const discussionStore = new DiscussionStore()
+const discussion = new DiscussionRunner({
+  store: discussionStore,
+  makeAdapter: () => new CliAdapter((pid) => project.effectiveEntries()[pid]),
+  resolveProfiles: () => project.effectiveEntries(),
+  projectRoot: () => config.get().currentProject,
+  isTrusted: (root) => isTrusted(root, config.get().trust),
+  emit: (id, ev) => { if (win && !win.webContents.isDestroyed()) win.webContents.send(discussionEventChannel(id), ev) },
+  now: () => Date.now(),
+  ids: () => randomUUID(),
 })
 
 function createWindow(): void {
@@ -37,7 +53,7 @@ app.whenReady().then(() => {
   )
   ptyHost.start()
   registerIpc({
-    config, ptyHost, project,
+    config, ptyHost, project, discussion, discussionStore,
     isTrustedSender: makeSenderGuard(DEV_URL, app.isPackaged),
     scrollback: { save: (id, data) => scrollbackMem.set(id, data), load: (id) => scrollbackMem.get(id) ?? null },
   })
@@ -45,5 +61,5 @@ app.whenReady().then(() => {
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })
 
-app.on('before-quit', () => { ptyHost.dispose(); project.stop() })
+app.on('before-quit', () => { ptyHost.dispose(); project.stop(); discussion.abortAll() })
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })

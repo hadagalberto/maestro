@@ -19,6 +19,12 @@ const api = {
     const h = (_e: Electron.IpcRendererEvent, p: AppEventPayloads[E]) => cb(p)
     ipcRenderer.on(event, h); return () => ipcRenderer.removeListener(event, h)
   },
+  onDiscussionEvent(id: string, cb: (ev: import('@shared/discussion/types').DiscussionEvent) => void): () => void {
+    const ch = `discussion:event:${id}`
+    const h = (_e: Electron.IpcRendererEvent, ev: import('@shared/discussion/types').DiscussionEvent) => cb(ev)
+    ipcRenderer.on(ch, h)
+    return () => ipcRenderer.removeListener(ch, h)
+  },
 }
 
 contextBridge.exposeInMainWorld('term', api)
