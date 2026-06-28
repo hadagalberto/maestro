@@ -13,6 +13,8 @@ test('app abre e spawna um terminal', async () => {
   const win = await app.firstWindow()
 
   await win.getByRole('button', { name: '+ terminal' }).click()
+  // o botão "+ terminal" agora abre o seletor de perfis; escolhe o preset shell
+  await win.getByRole('button', { name: /shell/ }).first().click()
   await expect(win.locator('.xterm-screen')).toHaveCount(1)
 
   // o terminal precisa de foco pra receber as teclas (o clique anterior focou o botão)

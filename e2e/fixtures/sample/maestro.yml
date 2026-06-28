@@ -1,0 +1,8 @@
+version: 1
+defaultProfile: shell
+profiles:
+  echoer:
+    name: Echoer
+    command: powershell.exe
+    args: []
+    color: "#3fb950"
