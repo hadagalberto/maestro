@@ -80,7 +80,8 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
       webgl?.dispose(); releaseWebgl(pane.id)
       term.dispose()
     }
-  }, [pane.id, pane.command, pane.cwd, pane.args, pane.env])
+    // só pane.id: command/cwd/args/env são imutáveis por terminal; evita matar/respawnar o PTY
+  }, [pane.id])
 
   return <div ref={host} className="h-full w-full" />
 }

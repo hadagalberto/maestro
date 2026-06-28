@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Sidebar } from './ui/Sidebar'
 import { Toolbar } from './ui/Toolbar'
 import { Grid } from './grid/Grid'
@@ -13,6 +13,7 @@ export function App() {
   const panes = useGrid((s) => s.panes)
   const addPane = useGrid((s) => s.addPane)
   const setLayout = useGrid((s) => s.setLayout)
+  const hydrated = useRef(false)
 
   useEffect(() => {
     void (async () => {
@@ -20,10 +21,12 @@ export function App() {
       const cfg: AppConfig = await window.term.invoke('config:get', undefined)
       setLayout(cfg.activeLayout)
       cfg.panes.forEach(addPane)
+      hydrated.current = true
     })()
   }, [addPane, setLayout])
 
   useEffect(() => {
+    if (!hydrated.current) return
     void window.term.invoke('config:set', { patch: { panes, activeLayout: useGrid.getState().activeLayout } })
   }, [panes])
 

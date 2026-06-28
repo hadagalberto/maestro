@@ -1,5 +1,10 @@
-import Store from 'electron-store'
+import ElectronStore from 'electron-store'
 import { DEFAULT_CONFIG, type AppConfig } from '@shared/types'
+
+// electron-store v11 is ESM; under the CJS main build the externalized `require`
+// yields the module namespace, so unwrap `.default` to get the real constructor.
+// Works for the real package and the test mock alike.
+const Store = (ElectronStore as unknown as { default?: typeof ElectronStore }).default ?? ElectronStore
 
 const CURRENT_SCHEMA = 1
 
