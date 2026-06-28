@@ -1,11 +1,13 @@
 import type { ProfileEntry } from './types'
 
-// Built-in profile templates. Keyed by id. name defaults to id when omitted.
+const oneShot = (args: string[]): ProfileEntry['discuss'] => ({ argsTemplate: args })
+
 export const PROFILE_PRESETS: Record<string, ProfileEntry> = {
-  claude:   { command: 'claude',   args: [], color: '#d97757' },
-  codex:    { command: 'codex',    args: [], color: '#10a37f' },
-  opencode: { command: 'opencode', args: [], color: '#f59e0b' },
-  amp:      { command: 'amp',      args: [], color: '#8b5cf6' },
+  claude:   { command: 'claude',   args: [], color: '#d97757', discuss: oneShot(['-p', '{{prompt}}']) },
+  codex:    { command: 'codex',    args: [], color: '#10a37f', discuss: oneShot(['exec', '{{prompt}}']) },
+  gemini:   { command: 'gemini',   args: [], color: '#4285f4', discuss: oneShot(['-p', '{{prompt}}']) },
+  opencode: { command: 'opencode', args: [], color: '#f59e0b', discuss: oneShot(['-p', '{{prompt}}']) },
+  amp:      { command: 'amp',      args: [], color: '#8b5cf6', discuss: oneShot(['-p', '{{prompt}}']) },
   shell: {
     command: process.platform === 'win32' ? 'powershell.exe' : 'bash',
     args: [], color: '#6e7681',

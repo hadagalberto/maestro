@@ -57,6 +57,12 @@ export const profileEntrySchema = z.object({
   autoStart: z.boolean().default(false),
   color: z.string().optional(),
   disabled: z.boolean().optional(),
+  discuss: z.object({
+    argsTemplate: z.array(z.string()),
+    stdin: z.boolean().optional(),
+    captureMode: z.enum(['pipe', 'pty']).optional(),
+    timeoutMs: z.number().int().positive().optional(),
+  }).optional(),
 })
 export const maestroConfigSchema = z.object({
   version: z.literal(1),
@@ -67,6 +73,25 @@ export const maestroConfigSchema = z.object({
 export const openPath = z.object({ path: z.string().min(1) })
 export const setGlobalProfiles = z.object({ profiles: z.record(z.string(), profileEntrySchema) })
 export const trustPath = z.object({ path: z.string().min(1) })
+
+export const summaryCardSchema = z.object({
+  kind: z.enum(['decision', 'ideas', 'verdict', 'plan', 'status', 'note']),
+  title: z.string(),
+  body: z.string(),
+  dissents: z.array(z.string()).optional(),
+  actions: z.array(z.object({ owner: z.string().optional(), task: z.string() })).optional(),
+})
+
+export const discussionInput = z.object({
+  topic: z.string().min(1),
+  templateKind: z.enum(['decision', 'brainstorm', 'review', 'plan', 'dev-squad', 'custom']),
+  orchestratorProfileId: z.string().min(1),
+  participantProfileIds: z.array(z.string().min(1)).min(2),
+  autonomous: z.boolean(),
+})
+
+export const discussionId = z.object({ id: z.string().min(1) })
+export const discussionApprove = z.object({ id: z.string().min(1), approve: z.boolean() })
 
 export const schemaByChannel = {
   'pty:create': ptyCreate,
@@ -84,4 +109,9 @@ export const schemaByChannel = {
   'trust:grant': trustPath,
   'trust:grantParent': trustPath,
   'trust:revoke': trustPath,
+  'discussion:start': discussionInput,
+  'discussion:get': discussionId,
+  'discussion:abort': discussionId,
+  'discussion:delete': discussionId,
+  'discussion:approve': discussionApprove,
 } as const

@@ -23,6 +23,7 @@ export interface ProfileEntry {
   autoStart?: boolean
   color?: string
   disabled?: boolean
+  discuss?: { argsTemplate: string[]; stdin?: boolean; captureMode?: 'pipe' | 'pty'; timeoutMs?: number }
 }
 
 // Resolved profile presented to the renderer.

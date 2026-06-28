@@ -1,4 +1,5 @@
 import type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry } from './types'
+import type { Discussion, DiscussionEvent, TemplateKind } from './discussion/types'
 
 export interface ProjectState {
   currentProject: string | null
@@ -28,6 +29,12 @@ export interface IpcRequest {
   'trust:grant': { args: { path: string }; result: ProjectState }
   'trust:grantParent': { args: { path: string }; result: ProjectState }
   'trust:revoke': { args: { path: string }; result: ProjectState }
+  'discussion:start': { args: { topic: string; templateKind: TemplateKind; orchestratorProfileId: string; participantProfileIds: string[]; autonomous: boolean }; result: { id: string } }
+  'discussion:list': { args: undefined; result: Discussion[] }
+  'discussion:get': { args: { id: string }; result: Discussion | null }
+  'discussion:abort': { args: { id: string }; result: void }
+  'discussion:delete': { args: { id: string }; result: void }
+  'discussion:approve': { args: { id: string; approve: boolean }; result: void }
 }
 export type IpcChannel = keyof IpcRequest
 
@@ -44,4 +51,8 @@ export interface AppEventPayloads { 'project:changed': ProjectState }
 
 export const TRUST_REQUIRED = 'TRUST_REQUIRED'
 
+export const discussionEventChannel = (id: string) => `discussion:event:${id}` as const
+export interface IpcEventById { 'discussion:event': DiscussionEvent }
+
 export type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry }
+export type { Discussion, DiscussionEvent, TemplateKind }
