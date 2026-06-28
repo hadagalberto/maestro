@@ -67,7 +67,7 @@ export interface DiscussionResult { transcript: Turn[]; cards: SummaryCard[]; ro
 
 // adapter boundary (only impure surface)
 export type AgentChunk = { type: 'delta'; text: string } | { type: 'final'; text: string } | { type: 'error'; message: string }
-export interface AgentTurnRequest { participantId: string; profileId: string; system?: string; prompt: string; cwd: string; signal: AbortSignal }
+export interface AgentTurnRequest { participantId: string; profileId: string; role: string; system?: string; prompt: string; cwd: string; signal: AbortSignal }
 export interface AgentAdapter { run(req: AgentTurnRequest): AsyncIterable<AgentChunk> }
 
 // engine deps + input
