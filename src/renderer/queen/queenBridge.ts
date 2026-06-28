@@ -1,6 +1,7 @@
 import { useGrid } from '../store/gridStore'
 import { useProject } from '../store/projectStore'
 import { readTerminal } from './terminalRegistry'
+import { queenEnv } from './queenInfo'
 import type { PaneConfig, Profile } from '@shared/types'
 import type { QueenRequest } from '@shared/queen'
 
@@ -8,7 +9,7 @@ function uuid(): string { return crypto.randomUUID() }
 
 function paneFromProfile(p: Profile, projectRoot: string | null): PaneConfig {
   const isProject = p.source === 'project'
-  return { id: uuid(), name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? projectRoot ?? '.', env: p.env, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: projectRoot ?? undefined }
+  return { id: uuid(), name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? projectRoot ?? '.', env: { ...queenEnv(), ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: projectRoot ?? undefined }
 }
 
 async function handle(req: QueenRequest): Promise<unknown> {
@@ -25,7 +26,7 @@ async function handle(req: QueenRequest): Promise<unknown> {
         if (!prof) throw new Error(`profile ${a.profileId} not found`)
         pane = paneFromProfile(prof, proj.currentProject)
       } else if (a.command) {
-        pane = { id: uuid(), name: a.name ?? a.command, command: a.command, cwd: proj.currentProject ?? '.', origin: 'user', projectRoot: proj.currentProject ?? undefined }
+        pane = { id: uuid(), name: a.name ?? a.command, command: a.command, cwd: proj.currentProject ?? '.', env: queenEnv(), origin: 'user', projectRoot: proj.currentProject ?? undefined }
       } else throw new Error('profileId or command required')
       grid.addPane(pane)
       return { id: pane.id }

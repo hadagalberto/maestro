@@ -15,6 +15,7 @@ import { useGrid } from './store/gridStore'
 import { useProject } from './store/projectStore'
 import { useDiscussions } from './store/discussionStore'
 import { mountQueenBridge } from './queen/queenBridge'
+import { loadQueenEnv, queenEnv } from './queen/queenInfo'
 import { hydrateLayoutSizes } from './grid/layoutStorage'
 import type { AppConfig, PaneConfig } from '@shared/types'
 import type { Profile, ProjectState } from '@shared/ipc'
@@ -42,6 +43,7 @@ export function App() {
       setLayout(cfg.activeLayout)
       cfg.panes.forEach(addPane)
       await useProject.getState().hydrate()
+      await loadQueenEnv()
       hydrated.current = true
     })()
     const offProject = window.term.on('project:changed', (s: ProjectState) => useProject.getState().apply(s))
@@ -54,7 +56,7 @@ export function App() {
 
   function paneFromProfile(p: Profile): PaneConfig {
     const isProject = p.source === 'project'
-    return { id: uuid(), name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? project.currentProject ?? '.', env: p.env, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: project.currentProject ?? undefined }
+    return { id: uuid(), name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? project.currentProject ?? '.', env: { ...queenEnv(), ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: project.currentProject ?? undefined }
   }
   function pickProfile(p: Profile) { addPane(paneFromProfile(p)) }
 

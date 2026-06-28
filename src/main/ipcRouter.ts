@@ -16,7 +16,7 @@ export interface RouterDeps {
   project: ProjectManager
   discussion: DiscussionRunner
   discussionStore: DiscussionStore
-  isTrustedSender: (e: IpcMainInvokeEvent) => boolean
+  isTrustedSender: (e: Electron.IpcMainInvokeEvent | Electron.IpcMainEvent) => boolean
   scrollback: { save: (id: string, data: string) => void; load: (id: string) => string | null }
   queenInfo: () => QueenInfo
   bridge: { handleResponse: (r: QueenResponse) => void }
@@ -78,11 +78,11 @@ export function registerIpc(deps: RouterDeps): void {
   handle('discussion:approve', (a) => { deps.discussion.approve(a.id, a.approve) })
 
   handle('queen:info', () => deps.queenInfo())
-  ipcMain.on('queen:res', (_e, r) => deps.bridge.handleResponse(r))
+  ipcMain.on('queen:res', (e, r) => { if (deps.isTrustedSender(e)) deps.bridge.handleResponse(r) })
 }
 
 export function makeSenderGuard(devUrl: string, isPackaged: boolean) {
-  return (e: IpcMainInvokeEvent): boolean => {
+  return (e: Electron.IpcMainInvokeEvent | Electron.IpcMainEvent): boolean => {
     const url = e.senderFrame?.url
     if (!url) return false
     if (isPackaged) return url.startsWith('file://')

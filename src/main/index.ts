@@ -1,5 +1,6 @@
 import { app, BrowserWindow, session, Notification } from 'electron'
 import { join } from 'node:path'
+import { writeFileSync, rmSync } from 'node:fs'
 import { ConfigStore } from './configStore'
 import { PtyHostBridge } from './ptyHostBridge'
 import { ProjectManager } from './projectManager'
@@ -72,6 +73,11 @@ app.whenReady().then(async () => {
     bridge,
     notify: (title, body) => { new Notification({ title, body }).show() },
   })
+  // publish url+token for agents/users (the panel references this file)
+  try {
+    const queenFile = join(app.getPath('userData'), 'queen.json')
+    writeFileSync(queenFile, JSON.stringify({ url: queen.url, token: queen.token }, null, 2), { mode: 0o600 })
+  } catch { /* non-fatal */ }
   registerIpc({
     config, ptyHost, project, discussion, discussionStore,
     isTrustedSender: makeSenderGuard(DEV_URL, app.isPackaged),
@@ -83,5 +89,8 @@ app.whenReady().then(async () => {
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })
 
-app.on('before-quit', () => { ptyHost.dispose(); project.stop(); discussion.abortAll(); void queen?.close() })
+app.on('before-quit', () => {
+  ptyHost.dispose(); project.stop(); discussion.abortAll(); void queen?.close()
+  try { rmSync(join(app.getPath('userData'), 'queen.json'), { force: true }) } catch { /* ignore */ }
+})
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
