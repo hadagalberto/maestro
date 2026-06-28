@@ -2,7 +2,9 @@ import { app, BrowserWindow, session } from 'electron'
 import { join } from 'node:path'
 import { ConfigStore } from './configStore'
 import { PtyHostBridge } from './ptyHostBridge'
+import { ProjectManager } from './projectManager'
 import { registerIpc, makeSenderGuard } from './ipcRouter'
+import type { ProjectState } from '@shared/ipc'
 
 const DEV_URL = process.env['ELECTRON_RENDERER_URL'] ?? 'http://localhost:5173'
 const scrollbackMem = new Map<string, string>()
@@ -10,6 +12,9 @@ const scrollbackMem = new Map<string, string>()
 let win: BrowserWindow | null = null
 const config = new ConfigStore()
 const ptyHost = new PtyHostBridge(() => win?.webContents ?? null)
+const project = new ProjectManager(config, (s: ProjectState) => {
+  if (win && !win.webContents.isDestroyed()) win.webContents.send('project:changed', s)
+})
 
 function createWindow(): void {
   win = new BrowserWindow({
@@ -26,23 +31,19 @@ function createWindow(): void {
 
 app.whenReady().then(() => {
   session.defaultSession.webRequest.onHeadersReceived((d, cb) =>
-    cb({ responseHeaders: {
-      ...d.responseHeaders,
+    cb({ responseHeaders: { ...d.responseHeaders,
       'Content-Security-Policy': ["default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws://localhost:5173"],
     } }),
   )
   ptyHost.start()
   registerIpc({
-    config, ptyHost,
+    config, ptyHost, project,
     isTrustedSender: makeSenderGuard(DEV_URL, app.isPackaged),
-    scrollback: {
-      save: (id, data) => scrollbackMem.set(id, data),
-      load: (id) => scrollbackMem.get(id) ?? null,
-    },
+    scrollback: { save: (id, data) => scrollbackMem.set(id, data), load: (id) => scrollbackMem.get(id) ?? null },
   })
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })
 
-app.on('before-quit', () => ptyHost.dispose())
+app.on('before-quit', () => { ptyHost.dispose(); project.stop() })
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })

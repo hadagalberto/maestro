@@ -1,18 +1,21 @@
-import { ipcMain, shell, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { ipcMain, shell, dialog, type IpcMainInvokeEvent } from 'electron'
 import { schemaByChannel } from '@shared/schemas'
-import type { IpcChannel, IpcRequest } from '@shared/ipc'
+import { TRUST_REQUIRED, type IpcChannel, type IpcRequest, type ProjectState } from '@shared/ipc'
 import { ConfigStore } from './configStore'
 import { PtyHostBridge } from './ptyHostBridge'
+import { ProjectManager } from './projectManager'
+import { scaffoldMaestroConfig } from './maestroConfig'
+import { isTrusted, canonical } from './trust'
 
 export interface RouterDeps {
   config: ConfigStore
   ptyHost: PtyHostBridge
+  project: ProjectManager
   isTrustedSender: (e: IpcMainInvokeEvent) => boolean
   scrollback: { save: (id: string, data: string) => void; load: (id: string) => string | null }
 }
 
-type Handler<C extends IpcChannel> =
-  (args: IpcRequest[C]['args'], e: IpcMainInvokeEvent) => IpcRequest[C]['result'] | Promise<IpcRequest[C]['result']>
+type Handler<C extends IpcChannel> = (args: IpcRequest[C]['args'], e: IpcMainInvokeEvent) => IpcRequest[C]['result'] | Promise<IpcRequest[C]['result']>
 
 export function registerIpc(deps: RouterDeps): void {
   const handle = <C extends IpcChannel>(channel: C, fn: Handler<C>) => {
@@ -24,7 +27,16 @@ export function registerIpc(deps: RouterDeps): void {
     })
   }
 
-  handle('pty:create', (a) => { deps.ptyHost.spawn(a) })
+  handle('pty:create', (a) => {
+    if (a.origin === 'project') {
+      const root = a.projectRoot ?? a.cwd
+      if (!isTrusted(root, deps.config.get().trust)) {
+        const err = new Error(TRUST_REQUIRED) as Error & { code?: string; projectRoot?: string }
+        err.code = TRUST_REQUIRED; err.projectRoot = canonical(root); throw err
+      }
+    }
+    deps.ptyHost.spawn(a)
+  })
   handle('pty:write', (a) => { deps.ptyHost.write(a.id, a.data) })
   handle('pty:resize', (a) => { deps.ptyHost.resize(a.id, a.cols, a.rows) })
   handle('pty:kill', (a) => { deps.ptyHost.kill(a.id) })
@@ -33,9 +45,25 @@ export function registerIpc(deps: RouterDeps): void {
   handle('scrollback:save', (a) => { deps.scrollback.save(a.id, a.data) })
   handle('scrollback:load', (a) => deps.scrollback.load(a.id))
   handle('shell:openExternal', (a) => { void shell.openExternal(a.url) })
+
+  handle('project:open', async (): Promise<ProjectState | null> => {
+    const r = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+    if (r.canceled || !r.filePaths[0]) return null
+    return deps.project.open(r.filePaths[0])
+  })
+  handle('project:openPath', (a) => deps.project.open(a.path))
+  handle('project:state', () => deps.project.state())
+  handle('profiles:setGlobal', async (a) => { deps.config.setGlobalProfiles(a.profiles); return deps.project.state() })
+  handle('maestro:scaffold', async (a) => { await scaffoldMaestroConfig(deps.project.maestroPath(a.path)); return deps.project.state() })
+  handle('trust:get', (a) => isTrusted(a.path, deps.config.get().trust))
+  handle('trust:grant', async (a) => { deps.config.grantTrust(canonical(a.path)); return deps.project.state() })
+  handle('trust:grantParent', async (a) => {
+    const parent = canonical(a.path).split(/[\\/]/).slice(0, -1).join('/') || canonical(a.path)
+    deps.config.grantTrust(parent); return deps.project.state()
+  })
+  handle('trust:revoke', async (a) => { deps.config.revokeTrust(canonical(a.path)); return deps.project.state() })
 }
 
-/** allowlist síncrona do sender: file:// próprio (packaged) ou dev server */
 export function makeSenderGuard(devUrl: string, isPackaged: boolean) {
   return (e: IpcMainInvokeEvent): boolean => {
     const url = e.senderFrame?.url
@@ -44,5 +72,3 @@ export function makeSenderGuard(devUrl: string, isPackaged: boolean) {
     return url.startsWith(devUrl) || url.startsWith('file://')
   }
 }
-
-export type { WebContents }
