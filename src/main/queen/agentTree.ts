@@ -51,9 +51,14 @@ export class AgentTree {
     if (!n) return Promise.resolve('gone')
     if (n.status === 'exited') return Promise.resolve({ exitCode: n.exitCode ?? 0 })
     return new Promise<AwaitResult>((resolve) => {
-      const timer = setTimeout(() => resolve('timeout'), timeoutMs)
-      const wrap = (r: AwaitResult) => { clearTimeout(timer); resolve(r) }
       const list = this.waiters.get(id) ?? []
+      const wrap = (r: AwaitResult) => {
+        clearTimeout(timer)
+        const arr = this.waiters.get(id)
+        if (arr) { const i = arr.indexOf(wrap); if (i >= 0) arr.splice(i, 1) }
+        resolve(r)
+      }
+      const timer = setTimeout(() => wrap('timeout'), timeoutMs)
       list.push(wrap); this.waiters.set(id, list)
     })
   }

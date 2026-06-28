@@ -31,6 +31,7 @@ const paneConfigSchema = z.object({
   profileId: z.string().optional(),
   origin: z.enum(['user', 'project']).optional(),
   projectRoot: z.string().optional(),
+  parentId: z.string().optional(),
 })
 const settingsPatchSchema = z.object({
   fontFamily: z.string(),
