@@ -1,5 +1,5 @@
-appId: com.example.hivetermclone
-productName: HiveTerm Clone
+appId: com.maestro.desktop
+productName: Maestro
 asar: true
 asarUnpack:
   - "**/node_modules/node-pty/**"
