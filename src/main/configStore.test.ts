@@ -10,7 +10,7 @@ const { mockStore, data } = vi.hoisted(() => {
   }
   return { mockStore, data }
 })
-vi.mock('electron-store', () => ({ default: vi.fn(() => mockStore) }))
+vi.mock('electron-store', () => ({ default: vi.fn(function () { return mockStore }) }))
 
 import { ConfigStore } from './configStore'
 
