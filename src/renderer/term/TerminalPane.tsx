@@ -10,6 +10,7 @@ import '@xterm/xterm/css/xterm.css'
 import type { PaneConfig } from '@shared/types'
 import { darkTheme } from './xtermTheme'
 import { canEnableWebgl, releaseWebgl } from './webglPool'
+import { registerTerminalReader, unregisterTerminalReader } from '../queen/terminalRegistry'
 
 export function TerminalPane({ pane }: { pane: PaneConfig }) {
   const host = useRef<HTMLDivElement>(null)
@@ -42,6 +43,7 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
       term.open(el!)
       fit.fit()
       term.focus()
+      registerTerminalReader(pane.id, () => serialize.serialize())
 
       // pula WebGL sob automação (Playwright seta navigator.webdriver): o renderer DOM
       // deixa o texto do terminal inspecionável no E2E. Sem efeito pro usuário real.
@@ -91,6 +93,7 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
       el.removeEventListener('mousedown', focusOnDown)
       void window.term.invoke('scrollback:save', { id: pane.id, data: serialize.serialize() })
       cleanupData(); cleanupExit()
+      unregisterTerminalReader(pane.id)
       webgl?.dispose(); releaseWebgl(pane.id)
       term.dispose()
     }

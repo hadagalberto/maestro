@@ -13,6 +13,7 @@ import { Grid } from './grid/Grid'
 import { useGrid } from './store/gridStore'
 import { useProject } from './store/projectStore'
 import { useDiscussions } from './store/discussionStore'
+import { mountQueenBridge } from './queen/queenBridge'
 import { hydrateLayoutSizes } from './grid/layoutStorage'
 import type { AppConfig, PaneConfig } from '@shared/types'
 import type { Profile, ProjectState } from '@shared/ipc'
@@ -41,8 +42,9 @@ export function App() {
       await useProject.getState().hydrate()
       hydrated.current = true
     })()
-    const off = window.term.on('project:changed', (s: ProjectState) => useProject.getState().apply(s))
-    return off
+    const offProject = window.term.on('project:changed', (s: ProjectState) => useProject.getState().apply(s))
+    const offQueen = mountQueenBridge()
+    return () => { offProject(); offQueen() }
   }, [addPane, setLayout])
 
   useEffect(() => { autoStarted.current = new Set() }, [project.currentProject])
