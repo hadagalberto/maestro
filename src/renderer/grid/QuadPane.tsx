@@ -1,0 +1,30 @@
+import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels'
+import type { PaneConfig } from '@shared/types'
+import { TerminalPane } from '../term/TerminalPane'
+import { layoutStorage } from './layoutStorage'
+
+const vsep = 'w-1 bg-zinc-700 hover:bg-sky-600'
+const hsep = 'h-1 bg-zinc-700 hover:bg-sky-600'
+
+export function QuadPane({ panes }: { panes: PaneConfig[] }) {
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({ id: 'grid-quad', storage: layoutStorage })
+  return (
+    <Group orientation="vertical" id="grid-quad" defaultLayout={defaultLayout} onLayoutChanged={onLayoutChanged} className="h-full w-full">
+      <Panel minSize="20%">
+        <Group orientation="horizontal" id="grid-quad-top" className="h-full w-full">
+          <Panel minSize="15%">{panes[0] && <TerminalPane key={panes[0].id} pane={panes[0]} />}</Panel>
+          <Separator className={vsep} />
+          <Panel minSize="15%">{panes[1] && <TerminalPane key={panes[1].id} pane={panes[1]} />}</Panel>
+        </Group>
+      </Panel>
+      <Separator className={hsep} />
+      <Panel minSize="20%">
+        <Group orientation="horizontal" id="grid-quad-bottom" className="h-full w-full">
+          <Panel minSize="15%">{panes[2] && <TerminalPane key={panes[2].id} pane={panes[2]} />}</Panel>
+          <Separator className={vsep} />
+          <Panel minSize="15%">{panes[3] && <TerminalPane key={panes[3].id} pane={panes[3]} />}</Panel>
+        </Group>
+      </Panel>
+    </Group>
+  )
+}
