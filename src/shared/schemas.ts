@@ -8,6 +8,11 @@ export const ptyCreate = z.object({
   env: z.record(z.string(), z.string()).optional(),
   cols: z.number().int().positive(),
   rows: z.number().int().positive(),
+  origin: z.enum(['user', 'project']).default('user'),
+  projectRoot: z.string().optional(),
+}).refine((v) => v.origin !== 'project' || (v.projectRoot != null && v.projectRoot.length > 0), {
+  message: 'projectRoot is required when origin is "project"',
+  path: ['projectRoot'],
 })
 export const ptyWrite = z.object({ id: z.string().min(1), data: z.string() })
 export const ptyResize = z.object({ id: z.string().min(1), cols: z.number().int().positive(), rows: z.number().int().positive() })
@@ -15,7 +20,27 @@ export const ptyKill = z.object({ id: z.string().min(1) })
 export const configSet = z.object({ patch: z.record(z.string(), z.unknown()) })
 export const scrollbackSave = z.object({ id: z.string().min(1), data: z.string() })
 export const scrollbackLoad = z.object({ id: z.string().min(1) })
-export const shellOpen = z.object({ url: z.string().url() })
+export const shellOpen = z.object({ url: z.url() })
+
+export const profileEntrySchema = z.object({
+  name: z.string().optional(),
+  command: z.string().min(1),
+  args: z.array(z.string()).default([]),
+  cwd: z.string().optional(),
+  env: z.record(z.string(), z.string()).optional(),
+  autoStart: z.boolean().default(false),
+  color: z.string().optional(),
+  disabled: z.boolean().optional(),
+})
+export const maestroConfigSchema = z.object({
+  version: z.literal(1),
+  defaultProfile: z.string().optional(),
+  profiles: z.record(z.string(), profileEntrySchema),
+})
+
+export const openPath = z.object({ path: z.string().min(1) })
+export const setGlobalProfiles = z.object({ profiles: z.record(z.string(), profileEntrySchema) })
+export const trustPath = z.object({ path: z.string().min(1) })
 
 export const schemaByChannel = {
   'pty:create': ptyCreate,
@@ -26,4 +51,11 @@ export const schemaByChannel = {
   'scrollback:save': scrollbackSave,
   'scrollback:load': scrollbackLoad,
   'shell:openExternal': shellOpen,
+  'project:openPath': openPath,
+  'profiles:setGlobal': setGlobalProfiles,
+  'maestro:scaffold': trustPath,
+  'trust:get': trustPath,
+  'trust:grant': trustPath,
+  'trust:grantParent': trustPath,
+  'trust:revoke': trustPath,
 } as const

@@ -1,8 +1,16 @@
-import type { AppConfig, PaneConfig } from './types'
+import type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry } from './types'
 
-/** request/response channels: invoke(channel, args) -> result */
+export interface ProjectState {
+  currentProject: string | null
+  recentProjects: string[]
+  trusted: boolean
+  profiles: Profile[]
+  problems: ConfigProblem[]
+  hasMaestroFile: boolean
+}
+
 export interface IpcRequest {
-  'pty:create': { args: { id: string; command: string; args?: string[]; cwd: string; env?: Record<string,string>; cols: number; rows: number }; result: void }
+  'pty:create': { args: { id: string; command: string; args?: string[]; cwd: string; env?: Record<string,string>; cols: number; rows: number; origin?: 'user'|'project'; projectRoot?: string }; result: void }
   'pty:write':  { args: { id: string; data: string }; result: void }
   'pty:resize': { args: { id: string; cols: number; rows: number }; result: void }
   'pty:kill':   { args: { id: string }; result: void }
@@ -11,10 +19,18 @@ export interface IpcRequest {
   'scrollback:save': { args: { id: string; data: string }; result: void }
   'scrollback:load': { args: { id: string }; result: string | null }
   'shell:openExternal': { args: { url: string }; result: void }
+  'project:open': { args: undefined; result: ProjectState | null }      // dialog; null if cancelled
+  'project:openPath': { args: { path: string }; result: ProjectState }
+  'project:state': { args: undefined; result: ProjectState }
+  'profiles:setGlobal': { args: { profiles: Record<string, ProfileEntry> }; result: ProjectState }
+  'maestro:scaffold': { args: { path: string }; result: ProjectState }
+  'trust:get': { args: { path: string }; result: boolean }
+  'trust:grant': { args: { path: string }; result: ProjectState }
+  'trust:grantParent': { args: { path: string }; result: ProjectState }
+  'trust:revoke': { args: { path: string }; result: ProjectState }
 }
 export type IpcChannel = keyof IpcRequest
 
-/** push channels: main -> renderer. pty:data/pty:exit são namespaced por id no nome do canal */
 export interface IpcEventPayloads {
   'pty:data': { data: string }
   'pty:exit': { code: number; reason?: string }
@@ -22,4 +38,10 @@ export interface IpcEventPayloads {
 export const ptyDataChannel = (id: string) => `pty:data:${id}` as const
 export const ptyExitChannel = (id: string) => `pty:exit:${id}` as const
 
-export type { AppConfig, PaneConfig }
+// app-wide push events (main -> renderer), fixed channel names
+export type AppEvent = 'project:changed'
+export interface AppEventPayloads { 'project:changed': ProjectState }
+
+export const TRUST_REQUIRED = 'TRUST_REQUIRED'
+
+export type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry }
