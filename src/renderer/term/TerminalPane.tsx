@@ -62,10 +62,17 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
       })
       term.onData((d) => { void window.term.invoke('pty:write', { id: pane.id, data: d }) })
 
-      await window.term.invoke('pty:create', {
-        id: pane.id, command: pane.command, args: pane.args, cwd: pane.cwd,
-        env: pane.env, cols: term.cols, rows: term.rows,
-      })
+      try {
+        await window.term.invoke('pty:create', {
+          id: pane.id, command: pane.command, args: pane.args, cwd: pane.cwd,
+          env: pane.env, cols: term.cols, rows: term.rows,
+          origin: pane.origin ?? 'user', projectRoot: pane.projectRoot,
+        })
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        if (msg.includes('TRUST_REQUIRED')) term.writeln('\r\n\x1b[33m[pasta não confiável — confie no projeto para rodar este perfil]\x1b[0m')
+        else term.writeln(`\r\n\x1b[31m[falha ao iniciar: ${msg}]\x1b[0m`)
+      }
     }
     void start()
 
