@@ -25,6 +25,12 @@ const api = {
     ipcRenderer.on(ch, h)
     return () => ipcRenderer.removeListener(ch, h)
   },
+  onQueenRequest(cb: (req: import('@shared/queen').QueenRequest) => void): () => void {
+    const h = (_e: Electron.IpcRendererEvent, req: import('@shared/queen').QueenRequest) => cb(req)
+    ipcRenderer.on('queen:req', h)
+    return () => ipcRenderer.removeListener('queen:req', h)
+  },
+  queenRespond(res: import('@shared/queen').QueenResponse): void { ipcRenderer.send('queen:res', res) },
 }
 
 contextBridge.exposeInMainWorld('term', api)

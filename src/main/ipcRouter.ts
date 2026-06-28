@@ -1,6 +1,7 @@
 import { ipcMain, shell, dialog, type IpcMainInvokeEvent } from 'electron'
 import { schemaByChannel } from '@shared/schemas'
 import { TRUST_REQUIRED, type IpcChannel, type IpcRequest, type ProjectState } from '@shared/ipc'
+import type { QueenInfo, QueenResponse } from '@shared/queen'
 import { ConfigStore } from './configStore'
 import { PtyHostBridge } from './ptyHostBridge'
 import { ProjectManager } from './projectManager'
@@ -17,6 +18,8 @@ export interface RouterDeps {
   discussionStore: DiscussionStore
   isTrustedSender: (e: IpcMainInvokeEvent) => boolean
   scrollback: { save: (id: string, data: string) => void; load: (id: string) => string | null }
+  queenInfo: () => QueenInfo
+  bridge: { handleResponse: (r: QueenResponse) => void }
 }
 
 type Handler<C extends IpcChannel> = (args: IpcRequest[C]['args'], e: IpcMainInvokeEvent) => IpcRequest[C]['result'] | Promise<IpcRequest[C]['result']>
@@ -73,6 +76,9 @@ export function registerIpc(deps: RouterDeps): void {
   handle('discussion:abort', (a) => { deps.discussion.abort(a.id) })
   handle('discussion:delete', (a) => { deps.discussion.abort(a.id); deps.discussionStore.delete(a.id) })
   handle('discussion:approve', (a) => { deps.discussion.approve(a.id, a.approve) })
+
+  handle('queen:info', () => deps.queenInfo())
+  ipcMain.on('queen:res', (_e, r) => deps.bridge.handleResponse(r))
 }
 
 export function makeSenderGuard(devUrl: string, isPackaged: boolean) {

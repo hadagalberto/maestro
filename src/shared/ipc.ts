@@ -1,5 +1,6 @@
 import type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry } from './types'
 import type { Discussion, DiscussionEvent, TemplateKind } from './discussion/types'
+import type { QueenInfo } from './queen'
 
 export interface ProjectState {
   currentProject: string | null
@@ -35,6 +36,7 @@ export interface IpcRequest {
   'discussion:abort': { args: { id: string }; result: void }
   'discussion:delete': { args: { id: string }; result: void }
   'discussion:approve': { args: { id: string; approve: boolean }; result: void }
+  'queen:info': { args: undefined; result: QueenInfo }
 }
 export type IpcChannel = keyof IpcRequest
 
@@ -56,3 +58,4 @@ export interface IpcEventById { 'discussion:event': DiscussionEvent }
 
 export type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry }
 export type { Discussion, DiscussionEvent, TemplateKind }
+export type { QueenInfo } from './queen'
