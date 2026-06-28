@@ -11,6 +11,7 @@ import type { PaneConfig } from '@shared/types'
 import { darkTheme } from './xtermTheme'
 import { canEnableWebgl, releaseWebgl } from './webglPool'
 import { registerTerminalReader, unregisterTerminalReader } from '../queen/terminalRegistry'
+import { useGrid } from '../store/gridStore'
 
 export function TerminalPane({ pane }: { pane: PaneConfig }) {
   const host = useRef<HTMLDivElement>(null)
@@ -60,6 +61,7 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
 
       cleanupData = window.term.onPtyData(pane.id, ({ data }) => term.write(data))
       cleanupExit = window.term.onPtyExit(pane.id, ({ code, reason }) => {
+        useGrid.getState().setExited(pane.id, code)
         term.writeln(`\r\n\x1b[31m[processo terminou code=${code}${reason ? ' ' + reason : ''}]\x1b[0m`)
       })
       term.onData((d) => { void window.term.invoke('pty:write', { id: pane.id, data: d }) })
@@ -69,6 +71,7 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
           id: pane.id, command: pane.command, args: pane.args, cwd: pane.cwd,
           env: pane.env, cols: term.cols, rows: term.rows,
           origin: pane.origin ?? 'user', projectRoot: pane.projectRoot,
+          name: pane.name, parentId: pane.parentId,
         })
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)

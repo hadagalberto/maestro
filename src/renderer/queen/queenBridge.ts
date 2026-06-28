@@ -7,9 +7,10 @@ import type { QueenRequest } from '@shared/queen'
 
 function uuid(): string { return crypto.randomUUID() }
 
-function paneFromProfile(p: Profile, projectRoot: string | null): PaneConfig {
+function paneFromProfile(p: Profile, projectRoot: string | null, parentId?: string): PaneConfig {
+  const id = uuid()
   const isProject = p.source === 'project'
-  return { id: uuid(), name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? projectRoot ?? '.', env: { ...queenEnv(), ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: projectRoot ?? undefined }
+  return { id, name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? projectRoot ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id, ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: projectRoot ?? undefined, parentId }
 }
 
 async function handle(req: QueenRequest): Promise<unknown> {
@@ -19,14 +20,15 @@ async function handle(req: QueenRequest): Promise<unknown> {
     case 'terminals.list':
       return grid.panes.map((p) => ({ id: p.id, name: p.name, command: p.command }))
     case 'terminals.spawn': {
-      const a = req.args as { profileId?: string; command?: string; name?: string }
+      const a = req.args as { profileId?: string; command?: string; name?: string; parentId?: string }
       let pane: PaneConfig
       if (a.profileId) {
         const prof = proj.profiles.find((p) => p.id === a.profileId)
         if (!prof) throw new Error(`profile ${a.profileId} not found`)
-        pane = paneFromProfile(prof, proj.currentProject)
+        pane = paneFromProfile(prof, proj.currentProject, a.parentId)
       } else if (a.command) {
-        pane = { id: uuid(), name: a.name ?? a.command, command: a.command, cwd: proj.currentProject ?? '.', env: queenEnv(), origin: 'user', projectRoot: proj.currentProject ?? undefined }
+        const id = uuid()
+        pane = { id, name: a.name ?? a.command, command: a.command, cwd: proj.currentProject ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id }, origin: 'user', projectRoot: proj.currentProject ?? undefined, parentId: a.parentId }
       } else throw new Error('profileId or command required')
       grid.addPane(pane)
       return { id: pane.id }

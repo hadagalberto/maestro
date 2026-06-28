@@ -54,9 +54,10 @@ export function App() {
   useEffect(() => { autoStarted.current = new Set() }, [project.currentProject])
   useEffect(() => { if (!hydrated.current) return; void window.term.invoke('config:set', { patch: { panes, activeLayout: useGrid.getState().activeLayout } }) }, [panes])
 
-  function paneFromProfile(p: Profile): PaneConfig {
+  function paneFromProfile(p: Profile, parentId?: string): PaneConfig {
+    const id = uuid()
     const isProject = p.source === 'project'
-    return { id: uuid(), name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? project.currentProject ?? '.', env: { ...queenEnv(), ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: project.currentProject ?? undefined }
+    return { id, name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? project.currentProject ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id, ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: project.currentProject ?? undefined, parentId }
   }
   function pickProfile(p: Profile) { addPane(paneFromProfile(p)) }
 
