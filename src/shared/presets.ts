@@ -5,7 +5,7 @@ const oneShot = (args: string[]): ProfileEntry['discuss'] => ({ argsTemplate: ar
 export const PROFILE_PRESETS: Record<string, ProfileEntry> = {
   claude:   { command: 'claude',   args: [], color: '#d97757', discuss: oneShot(['-p', '{{prompt}}']) },
   codex:    { command: 'codex',    args: [], color: '#10a37f', discuss: oneShot(['exec', '{{prompt}}']) },
-  gemini:   { command: 'gemini',   args: [], color: '#4285f4', discuss: oneShot(['-p', '{{prompt}}']) },
+  antigravity: { command: 'agy', args: [], color: '#00c2a8', discuss: oneShot(['-p', '{{prompt}}']) },
   opencode: { command: 'opencode', args: [], color: '#f59e0b', discuss: oneShot(['-p', '{{prompt}}']) },
   amp:      { command: 'amp',      args: [], color: '#8b5cf6', discuss: oneShot(['-p', '{{prompt}}']) },
   shell: {
