@@ -1,6 +1,9 @@
 node_modules/
 dist/
 out/
+release/
+test-results/
+playwright-report/
 *.log
 .DS_Store
 .vitest-attachments/

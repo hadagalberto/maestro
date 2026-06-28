@@ -1,0 +1,15 @@
+appId: com.example.hivetermclone
+productName: HiveTerm Clone
+asar: true
+asarUnpack:
+  - "**/node_modules/node-pty/**"
+directories:
+  output: release
+files:
+  - out/**
+win:
+  target: nsis
+mac:
+  target: [dmg, zip]
+linux:
+  target: [AppImage, deb]
