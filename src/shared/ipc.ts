@@ -12,7 +12,7 @@ export interface ProjectState {
 }
 
 export interface IpcRequest {
-  'pty:create': { args: { id: string; command: string; args?: string[]; cwd: string; env?: Record<string,string>; cols: number; rows: number; origin?: 'user'|'project'; projectRoot?: string }; result: void }
+  'pty:create': { args: { id: string; command: string; args?: string[]; cwd: string; env?: Record<string,string>; cols: number; rows: number; origin?: 'user'|'project'; projectRoot?: string; name?: string; parentId?: string }; result: void }
   'pty:write':  { args: { id: string; data: string }; result: void }
   'pty:resize': { args: { id: string; cols: number; rows: number }; result: void }
   'pty:kill':   { args: { id: string }; result: void }

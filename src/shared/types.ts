@@ -11,6 +11,7 @@ export interface PaneConfig {
   profileId?: string
   origin?: 'user' | 'project'
   projectRoot?: string
+  parentId?: string
 }
 
 // Shape stored in maestro.yml profiles and in globalProfiles. name defaults to the map key.

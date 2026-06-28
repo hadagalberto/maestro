@@ -10,6 +10,8 @@ export const ptyCreate = z.object({
   rows: z.number().int().positive(),
   origin: z.enum(['user', 'project']).default('user'),
   projectRoot: z.string().optional(),
+  name: z.string().optional(),
+  parentId: z.string().optional(),
 }).refine((v) => v.origin !== 'project' || (v.projectRoot != null && v.projectRoot.length > 0), {
   message: 'projectRoot is required when origin is "project"',
   path: ['projectRoot'],
