@@ -56,9 +56,15 @@ function queenInfo(): QueenInfo {
   return { running: queen != null, url: queen?.url ?? null, port: queen?.port ?? null, token: queen?.token ?? null }
 }
 
+function appIcon(): string {
+  return app.isPackaged
+    ? join(process.resourcesPath, 'icon.png')
+    : join(__dirname, '../../build/icon.png')
+}
+
 function createWindow(): void {
   win = new BrowserWindow({
-    width: 1400, height: 900, show: false, backgroundColor: '#0d1117',
+    width: 1400, height: 900, show: false, backgroundColor: '#0d1117', icon: appIcon(),
     webPreferences: {
       preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true,
