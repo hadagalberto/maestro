@@ -101,6 +101,9 @@ export const gitFileArg = z.object({ file: z.string().min(1) })
 export const gitCommitArgs = z.object({ message: z.string().min(1) })
 export const gitPrArgs = z.object({ title: z.string().min(1), body: z.string() })
 
+export const filesSearchArgs = z.object({ query: z.string(), opts: z.object({ regex: z.boolean(), caseSensitive: z.boolean(), wholeWord: z.boolean() }) })
+export const filesReadArgs = z.object({ path: z.string().min(1) })
+
 export const schemaByChannel = {
   'pty:create': ptyCreate,
   'pty:write': ptyWrite,
@@ -127,4 +130,6 @@ export const schemaByChannel = {
   'git:unstage': gitFileArg,
   'git:commit': gitCommitArgs,
   'git:createPR': gitPrArgs,
+  'files:search': filesSearchArgs,
+  'files:read': filesReadArgs,
 } as const

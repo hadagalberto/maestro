@@ -2,6 +2,7 @@ import type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry } from
 import type { Discussion, DiscussionEvent, TemplateKind } from './discussion/types'
 import type { QueenInfo } from './queen'
 import type { GitStatus, GitResult, PrResult } from './git'
+import type { SearchFileResult, SearchOptions, FileContent } from './files'
 
 export interface ProjectState {
   currentProject: string | null
@@ -46,6 +47,9 @@ export interface IpcRequest {
   'git:push': { args: undefined; result: GitResult }
   'git:createPR': { args: { title: string; body: string }; result: PrResult }
   'git:suggestCommit': { args: undefined; result: { message: string } }
+  'files:list': { args: undefined; result: string[] }
+  'files:search': { args: { query: string; opts: SearchOptions }; result: SearchFileResult[] }
+  'files:read': { args: { path: string }; result: FileContent }
 }
 export type IpcChannel = keyof IpcRequest
 
@@ -69,3 +73,4 @@ export type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry }
 export type { Discussion, DiscussionEvent, TemplateKind }
 export type { QueenInfo } from './queen'
 export type { GitStatus, GitFile, GitResult, PrResult } from './git'
+export type { SearchFileResult, SearchMatch, SearchOptions, FileContent } from './files'
