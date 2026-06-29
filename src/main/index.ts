@@ -89,6 +89,16 @@ function createWindow(): void {
     },
   })
   win.once('ready-to-show', () => win?.show())
+  // Menu de contexto (botão direito): copiar/colar/selecionar tudo. Necessário em
+  // terminais (Ctrl+V é literal ^V no shell) e como a menu bar nativa foi removida.
+  win.webContents.on('context-menu', (_e, params) => {
+    Menu.buildFromTemplate([
+      { role: 'copy', enabled: params.editFlags.canCopy },
+      { role: 'paste', enabled: params.editFlags.canPaste },
+      { type: 'separator' },
+      { role: 'selectAll' },
+    ]).popup({ window: win ?? undefined })
+  })
   if (process.env['ELECTRON_RENDERER_URL']) win.loadURL(DEV_URL)
   else win.loadFile(join(__dirname, '../renderer/index.html'))
 }
