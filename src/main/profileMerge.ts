@@ -13,6 +13,7 @@ function toProfile(id: string, e: ProfileEntry, source: Profile['source']): Prof
     autoStart: e.autoStart ?? false,
     color: e.color,
     disabled: e.disabled,
+    autoRestart: e.autoRestart,
     source,
   }
 }

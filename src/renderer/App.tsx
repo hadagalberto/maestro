@@ -73,7 +73,7 @@ export function App() {
   function paneFromProfile(p: Profile, parentId?: string): PaneConfig {
     const id = uuid()
     const isProject = p.source === 'project'
-    return { id, name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? project.currentProject ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id, ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: project.currentProject ?? undefined, parentId }
+    return { id, name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? project.currentProject ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id, ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: project.currentProject ?? undefined, parentId, autoRestart: p.autoRestart }
   }
   function pickProfile(p: Profile) { addPane(paneFromProfile(p)) }
 

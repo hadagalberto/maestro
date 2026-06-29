@@ -10,7 +10,7 @@ function uuid(): string { return crypto.randomUUID() }
 function paneFromProfile(p: Profile, projectRoot: string | null, parentId?: string): PaneConfig {
   const id = uuid()
   const isProject = p.source === 'project'
-  return { id, name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? projectRoot ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id, ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: projectRoot ?? undefined, parentId }
+  return { id, name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? projectRoot ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id, ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: projectRoot ?? undefined, parentId, autoRestart: p.autoRestart }
 }
 
 async function handle(req: QueenRequest): Promise<unknown> {

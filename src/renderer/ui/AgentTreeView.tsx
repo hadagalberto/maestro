@@ -6,7 +6,6 @@ export function AgentTreeView() {
   const exited = useGrid((s) => s.exited)
   const active = useGrid((s) => s.activePaneId)
   const setActive = useGrid((s) => s.setActive)
-  const removePane = useGrid((s) => s.removePane)
 
   const ids = new Set(panes.map((p) => p.id))
   const childrenOf = (pid: string | undefined) => panes.filter((p) => (p.parentId && ids.has(p.parentId) ? p.parentId : undefined) === pid)
@@ -23,7 +22,7 @@ export function AgentTreeView() {
           style={{ paddingLeft: 8 + depth * 14 }}>
           <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: done ? '#52525b' : (p.color ?? '#3fb950') }} title={done ? `exited ${exited[p.id]}` : 'running'} />
           <span className="flex-1 truncate">{p.name}</span>
-          <button onClick={(e) => { e.stopPropagation(); removePane(p.id); void window.term.invoke('pty:kill', { id: p.id }) }} className="text-zinc-500 hover:text-red-400">×</button>
+          <button onClick={(e) => { e.stopPropagation(); const ids = useGrid.getState().removePaneTree(p.id); for (const id of ids) void window.term.invoke('pty:kill', { id }) }} className="text-zinc-500 hover:text-red-400">×</button>
         </div>
         {childrenOf(p.id).map((c) => row(c, depth + 1))}
       </div>

@@ -12,9 +12,11 @@ import { darkTheme } from './xtermTheme'
 import { canEnableWebgl, releaseWebgl } from './webglPool'
 import { registerTerminalReader, unregisterTerminalReader } from '../queen/terminalRegistry'
 import { useGrid } from '../store/gridStore'
+import { nextRestart } from '../reliability/restart'
 
 export function TerminalPane({ pane }: { pane: PaneConfig }) {
   const host = useRef<HTMLDivElement>(null)
+  const restarts = useRef(0)
 
   useEffect(() => {
     const el = host.current
@@ -62,7 +64,14 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
       cleanupData = window.term.onPtyData(pane.id, ({ data }) => term.write(data))
       cleanupExit = window.term.onPtyExit(pane.id, ({ code, reason }) => {
         useGrid.getState().setExited(pane.id, code)
-        term.writeln(`\r\n\x1b[31m[processo terminou code=${code}${reason ? ' ' + reason : ''}]\x1b[0m`)
+        const { restart, delayMs } = nextRestart(pane.autoRestart, code, restarts.current)
+        if (restart) {
+          restarts.current += 1
+          term.writeln(`\r\n\x1b[33m[reiniciando ${restarts.current}/3 em ${delayMs}ms…]\x1b[0m`)
+          setTimeout(() => { if (!disposed) void window.term.invoke('pty:create', { id: pane.id, command: pane.command, args: pane.args, cwd: pane.cwd, env: pane.env, cols: term.cols, rows: term.rows, origin: pane.origin ?? 'user', projectRoot: pane.projectRoot, name: pane.name, parentId: pane.parentId }) }, delayMs)
+        } else {
+          term.writeln(`\r\n\x1b[31m[processo terminou code=${code}${reason ? ' ' + reason : ''}]\x1b[0m`)
+        }
       })
       term.onData((d) => { void window.term.invoke('pty:write', { id: pane.id, data: d }) })
 

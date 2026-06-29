@@ -18,4 +18,15 @@ describe('gridStore', () => {
     useGrid.getState().setLayout('quad')
     expect(useGrid.getState().activeLayout).toBe('quad')
   })
+  it('removePaneTree remove descendentes', () => {
+    useGrid.setState({ activeLayout: 'two', activePaneId: null, panes: [
+      { id: 'a', name: 'a', command: 'x', cwd: '.' },
+      { id: 'b', name: 'b', command: 'x', cwd: '.', parentId: 'a' },
+      { id: 'c', name: 'c', command: 'x', cwd: '.', parentId: 'b' },
+      { id: 'z', name: 'z', command: 'x', cwd: '.' },
+    ] })
+    const removed = useGrid.getState().removePaneTree('a')
+    expect(removed.sort()).toEqual(['a', 'b', 'c'])
+    expect(useGrid.getState().panes.map((p) => p.id)).toEqual(['z'])
+  })
 })

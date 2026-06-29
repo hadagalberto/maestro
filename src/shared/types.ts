@@ -40,6 +40,7 @@ export interface Profile {
   autoStart: boolean
   color?: string
   disabled?: boolean
+  autoRestart?: boolean
   source: 'preset' | 'global' | 'project'
 }
 
