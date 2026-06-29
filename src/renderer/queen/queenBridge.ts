@@ -2,6 +2,7 @@ import { useGrid } from '../store/gridStore'
 import { useProject } from '../store/projectStore'
 import { readTerminal } from './terminalRegistry'
 import { queenEnv } from './queenInfo'
+import { yoloInject } from '../cli/yolo'
 import type { PaneConfig, Profile } from '@shared/types'
 import type { QueenRequest } from '@shared/queen'
 
@@ -10,7 +11,8 @@ function uuid(): string { return crypto.randomUUID() }
 function paneFromProfile(p: Profile, projectRoot: string | null, parentId?: string): PaneConfig {
   const id = uuid()
   const isProject = p.source === 'project'
-  return { id, name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? projectRoot ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id, ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: projectRoot ?? undefined, parentId, autoRestart: p.autoRestart }
+  const yi = yoloInject(p.command, p.yolo)
+  return { id, name: p.name, command: p.command, args: [...p.args, ...yi.args], cwd: p.cwd ?? projectRoot ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id, ...yi.env, ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: projectRoot ?? undefined, parentId, autoRestart: p.autoRestart }
 }
 
 async function handle(req: QueenRequest): Promise<unknown> {

@@ -21,6 +21,7 @@ import { useProject } from './store/projectStore'
 import { useDiscussions } from './store/discussionStore'
 import { usePins } from './store/pinsStore'
 import { mountQueenBridge } from './queen/queenBridge'
+import { yoloInject } from './cli/yolo'
 import { loadQueenEnv, queenEnv } from './queen/queenInfo'
 import { hydrateLayoutSizes } from './grid/layoutStorage'
 import type { AppConfig, PaneConfig } from '@shared/types'
@@ -91,7 +92,8 @@ export function App() {
   function paneFromProfile(p: Profile, parentId?: string): PaneConfig {
     const id = uuid()
     const isProject = p.source === 'project'
-    return { id, name: p.name, command: p.command, args: p.args, cwd: p.cwd ?? project.currentProject ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id, ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: project.currentProject ?? undefined, parentId, autoRestart: p.autoRestart }
+    const yi = yoloInject(p.command, p.yolo)
+    return { id, name: p.name, command: p.command, args: [...p.args, ...yi.args], cwd: p.cwd ?? project.currentProject ?? '.', env: { ...queenEnv(), MAESTRO_TERMINAL_ID: id, ...yi.env, ...(p.env ?? {}) }, color: p.color, profileId: p.id, origin: isProject ? 'project' : 'user', projectRoot: project.currentProject ?? undefined, parentId, autoRestart: p.autoRestart }
   }
   function pickProfile(p: Profile) { addPane(paneFromProfile(p)) }
 

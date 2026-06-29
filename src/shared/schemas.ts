@@ -64,6 +64,7 @@ export const profileEntrySchema = z.object({
   color: z.string().optional(),
   disabled: z.boolean().optional(),
   autoRestart: z.boolean().optional(),
+  yolo: z.boolean().optional(),
   discuss: z.object({
     argsTemplate: z.array(z.string()),
     stdin: z.boolean().optional(),

@@ -26,6 +26,7 @@ export interface ProfileEntry {
   color?: string
   disabled?: boolean
   autoRestart?: boolean
+  yolo?: boolean   // inicia o CLI pulando todas as permissões/aprovações (flag por-CLI)
   discuss?: { argsTemplate: string[]; stdin?: boolean; captureMode?: 'pipe' | 'pty'; timeoutMs?: number }
 }
 
@@ -41,6 +42,7 @@ export interface Profile {
   color?: string
   disabled?: boolean
   autoRestart?: boolean
+  yolo?: boolean
   source: 'preset' | 'global' | 'project'
 }
 

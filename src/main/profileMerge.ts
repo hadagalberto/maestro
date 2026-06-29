@@ -14,6 +14,7 @@ function toProfile(id: string, e: ProfileEntry, source: Profile['source']): Prof
     color: e.color,
     disabled: e.disabled,
     autoRestart: e.autoRestart,
+    yolo: e.yolo,
     source,
   }
 }
