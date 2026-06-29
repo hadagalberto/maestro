@@ -19,6 +19,7 @@ import { PinsStore } from './pins/pinsStore'
 import { discussionEventChannel, type ProjectState } from '@shared/ipc'
 import type { QueenInfo } from '@shared/queen'
 import { randomUUID } from 'node:crypto'
+import { projectPathFromArgs, userArgs } from './cliArgs'
 
 const DEV_URL = process.env['ELECTRON_RENDERER_URL'] ?? 'http://localhost:5173'
 const scrollbackMem = new Map<string, string>()
@@ -92,7 +93,22 @@ function createWindow(): void {
   else win.loadFile(join(__dirname, '../renderer/index.html'))
 }
 
+function openProjectFromArgs(argv: string[], cwd: string): void {
+  const p = projectPathFromArgs(userArgs(argv, app.isPackaged), cwd)
+  if (p) { try { project.open(p) } catch { /* pasta inválida: ignora */ } }
+}
+
+// Instância única: `maestro <pasta>` numa segunda invocação foca a janela existente
+// e abre a pasta, em vez de subir um segundo app.
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
+if (!gotSingleInstanceLock) app.quit()
+app.on('second-instance', (_e, argv, cwd) => {
+  if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus() }
+  openProjectFromArgs(argv, cwd)
+})
+
 app.whenReady().then(async () => {
+  if (!gotSingleInstanceLock) return
   session.defaultSession.webRequest.onHeadersReceived((d, cb) =>
     cb({ responseHeaders: { ...d.responseHeaders,
       'Content-Security-Policy': ["default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws://localhost:5173"],
@@ -138,6 +154,7 @@ app.whenReady().then(async () => {
   })
   Menu.setApplicationMenu(null)
   createWindow()
+  openProjectFromArgs(process.argv, process.cwd())
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })
 

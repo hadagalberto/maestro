@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "Desktop app para orquestrar CLIs de IA em grid de terminais",
   "main": "out/main/index.js",
+  "bin": { "maestro": "bin/maestro.js" },
+  "repository": { "type": "git", "url": "https://github.com/hadagalberto/maestro.git" },
+  "author": "Hadagalberto Junior",
+  "license": "MIT",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
@@ -37,7 +41,6 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
-    "@electron/rebuild": "^4.0.5",
     "@playwright/test": "^1.61.0",
     "@tailwindcss/vite": "^4.3.1",
     "@types/node": "^22.0.0",
