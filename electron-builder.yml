@@ -34,3 +34,4 @@ publish:
   provider: github
   owner: hadagalberto
   repo: maestro
+  releaseType: release
