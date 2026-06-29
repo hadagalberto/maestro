@@ -15,6 +15,7 @@ import { Mailbox } from './queen/mailbox'
 import { AgentTree } from './queen/agentTree'
 import { GitService } from './git/gitService'
 import { FileService } from './files/fileService'
+import { PinsStore } from './pins/pinsStore'
 import { discussionEventChannel, type ProjectState } from '@shared/ipc'
 import type { QueenInfo } from '@shared/queen'
 import { randomUUID } from 'node:crypto'
@@ -43,6 +44,8 @@ const mailbox = new Mailbox()
 const agentTree = new AgentTree()
 const git = new GitService()
 const files = new FileService()
+const pins = new PinsStore()
+const emitPinsChanged = () => { if (win && !win.webContents.isDestroyed()) win.webContents.send('pins:changed') }
 ptyHost.onExit = (id, code) => {
   const r = agentTree.markExited(id, code)
   if (r?.parentId) mailbox.send({ from: 'system', to: r.parentId, text: `agent ${id} exited (code ${code})` })
@@ -83,6 +86,8 @@ app.whenReady().then(async () => {
     bridge,
     notify: (title, body) => { new Notification({ title, body }).show() },
     agentTree,
+    pins,
+    onPinsChanged: emitPinsChanged,
   })
   // publish url+token for agents/users (the panel references this file)
   try {

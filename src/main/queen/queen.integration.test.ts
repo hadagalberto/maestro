@@ -1,10 +1,19 @@
 import { describe, it, expect, vi } from 'vitest'
+
+const { mockStore, data } = vi.hoisted(() => {
+  const data: Record<string, unknown> = {}
+  const mockStore = { get: (k: string) => data[k], set: vi.fn((k: string, v: unknown) => { data[k] = v }) }
+  return { mockStore, data }
+})
+vi.mock('electron-store', () => ({ default: vi.fn(function () { return mockStore }) }))
+
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { startQueen } from './server'
 import { QueenAuth } from './auth'
 import { Mailbox } from './mailbox'
 import { AgentTree } from './agentTree'
+import { PinsStore } from '../pins/pinsStore'
 
 function deps(notify = vi.fn()) {
   return {
@@ -17,6 +26,8 @@ function deps(notify = vi.fn()) {
     bridge: { request: vi.fn().mockResolvedValue('') },
     notify,
     agentTree: new AgentTree(() => 1),
+    pins: new PinsStore(),
+    onPinsChanged: vi.fn(),
   }
 }
 
@@ -36,7 +47,7 @@ describe('Queen integration (real MCP client)', () => {
       const { client, transport } = await connect(h.url, 'tok')
       const tools = await client.listTools()
       expect(tools.tools.map((t) => t.name)).toContain('notify')
-      expect(tools.tools.length).toBe(16)
+      expect(tools.tools.length).toBe(24)
 
       await client.callTool({ name: 'notify', arguments: { title: 'T', body: 'B' } })
       expect(notify).toHaveBeenCalledWith('T', 'B')

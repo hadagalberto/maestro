@@ -5,6 +5,7 @@ import type { RendererBridge } from './rendererBridge'
 import type { Discussion } from '@shared/discussion/types'
 import type { ProfileEntry } from '@shared/types'
 import type { AgentTree } from './agentTree'
+import type { PinsStore } from '../pins/pinsStore'
 
 export interface QueenToolDeps {
   discussionRunner: { start(a: { topic: string; templateKind: Discussion['templateKind']; orchestratorProfileId: string; participantProfileIds: string[]; autonomous: boolean }): Promise<{ id: string }> }
@@ -16,6 +17,8 @@ export interface QueenToolDeps {
   bridge: Pick<RendererBridge, 'request'>
   notify: (title: string, body: string) => void
   agentTree: AgentTree
+  pins: PinsStore
+  onPinsChanged: () => void
 }
 
 type ToolResult = { content: { type: 'text'; text: string }[]; isError?: boolean }
@@ -87,6 +90,27 @@ export function registerQueenTools(mcp: McpServer, deps: QueenToolDeps): Record<
       try { output = String(await deps.bridge.request('terminals.read', { id: a.id })) } catch { /* best-effort */ }
       return json({ exitCode: r.exitCode, output })
     })
+
+  const proj = () => deps.currentProject()
+  const noProj = () => err('nenhum projeto aberto')
+  const changed = <T>(v: T): T => { deps.onPinsChanged(); return v }
+
+  reg('list_pins', { title: 'List pins', description: 'List project pins (checklist)', inputSchema: {} },
+    () => { const r = proj(); return r ? json(deps.pins.listPins(r)) : noProj() })
+  reg('create_pin', { title: 'Create pin', description: 'Add a checklist pin to the project', inputSchema: { text: z.string() } },
+    (a) => { const r = proj(); if (!r) return noProj(); const p = deps.pins.createPin(r, a.text as string); deps.onPinsChanged(); return json(p) })
+  reg('update_pin', { title: 'Update pin', description: 'Edit a pin text', inputSchema: { id: z.string(), text: z.string() } },
+    (a) => { const r = proj(); if (!r) return noProj(); deps.pins.updatePin(r, a.id as string, a.text as string); return changed(ok('updated')) })
+  reg('set_pin_done', { title: 'Set pin done', description: 'Mark a pin done/undone', inputSchema: { id: z.string(), done: z.boolean() } },
+    (a) => { const r = proj(); if (!r) return noProj(); deps.pins.setPinDone(r, a.id as string, a.done as boolean); return changed(ok('ok')) })
+  reg('delete_pin', { title: 'Delete pin', description: 'Remove a pin', inputSchema: { id: z.string() } },
+    (a) => { const r = proj(); if (!r) return noProj(); deps.pins.deletePin(r, a.id as string); return changed(ok('deleted')) })
+  reg('get_notes', { title: 'Get notes', description: 'Get the project scratchpad notes', inputSchema: {} },
+    () => { const r = proj(); return r ? ok(deps.pins.getNotes(r)) : noProj() })
+  reg('set_notes', { title: 'Set notes', description: 'Replace the project scratchpad notes', inputSchema: { notes: z.string() } },
+    (a) => { const r = proj(); if (!r) return noProj(); deps.pins.setNotes(r, a.notes as string); return changed(ok('saved')) })
+  reg('append_notes', { title: 'Append notes', description: 'Append a line to the project notes', inputSchema: { chunk: z.string() } },
+    (a) => { const r = proj(); if (!r) return noProj(); deps.pins.appendNotes(r, a.chunk as string); return changed(ok('appended')) })
 
   return handlers
 }
