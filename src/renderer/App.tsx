@@ -35,6 +35,8 @@ export function App() {
   const hydrated = useRef(false)
   const project = useProject()
   const autoStarted = useRef<Set<string>>(new Set())
+  const prevProject = useRef<string | null>(null)
+  const [switchPrompt, setSwitchPrompt] = useState<{ oldIds: string[] } | null>(null)
   const [showGlobals, setShowGlobals] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -64,7 +66,17 @@ export function App() {
     return () => { offProject(); offQueen(); offPins() }
   }, [addPane, setLayout])
 
-  useEffect(() => { autoStarted.current = new Set() }, [project.currentProject])
+  useEffect(() => {
+    autoStarted.current = new Set()
+    const prev = prevProject.current
+    prevProject.current = project.currentProject
+    // trocou de projeto com terminais abertos → pergunta o que fazer com os antigos
+    // (snapshot ANTES do autoStart do novo projeto, que roda no effect declarado abaixo)
+    if (prev && project.currentProject && prev !== project.currentProject) {
+      const oldIds = useGrid.getState().panes.map((p) => p.id)
+      if (oldIds.length) setSwitchPrompt({ oldIds })
+    }
+  }, [project.currentProject])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -124,6 +136,21 @@ export function App() {
       {showFinder && <FileFinder onClose={() => setShowFinder(false)} />}
       {showSearch && <SearchPanel onClose={() => setShowSearch(false)} />}
       {showPins && <PinsPanel onClose={() => setShowPins(false)} />}
+      {switchPrompt && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-96 rounded border border-zinc-700 bg-zinc-900 p-4 text-sm">
+            <div className="mb-2 font-semibold">Projeto alterado</div>
+            <div className="mb-3 text-xs text-zinc-400">Fechar os {switchPrompt.oldIds.length} terminal(is) do projeto anterior? Eles continuam na pasta antiga.</div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setSwitchPrompt(null)} className="rounded bg-zinc-800 px-2 py-0.5 text-zinc-200">Manter</button>
+              <button
+                onClick={() => { const g = useGrid.getState(); for (const id of switchPrompt.oldIds) { void window.term.invoke('pty:kill', { id }); g.removePane(id) } setSwitchPrompt(null) }}
+                className="rounded bg-red-700 px-2 py-0.5 text-white"
+              >Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
       <FileViewer />
     </div>
   )
