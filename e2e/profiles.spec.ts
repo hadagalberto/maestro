@@ -38,3 +38,21 @@ test('abre projeto, modo restrito, confia, perfil shell roda', async () => {
   await expect(win.locator('.xterm-rows')).toContainText('MAESTROOK', { timeout: 20000 })
   await app.close()
 })
+
+test('painel perfis globais abre e adiciona (sem crash de render-loop)', async () => {
+  const userDataDir = mkdtempSync(join(tmpdir(), 'maestro-e2e-gp-'))
+  const app = await electron.launch({ args: ['.', `--user-data-dir=${userDataDir}`] })
+  const errors: string[] = []
+  const win = await app.firstWindow()
+  win.on('pageerror', (e) => errors.push(e.message))
+  await win.waitForSelector('text=Layout', { timeout: 20000 })
+
+  await win.getByRole('button', { name: 'perfis globais' }).click()
+  await expect(win.getByPlaceholder('id')).toBeVisible({ timeout: 10000 })
+  await win.getByPlaceholder('id').fill('meucli')
+  await win.getByPlaceholder('command').fill('node')
+  await win.getByRole('button', { name: 'add', exact: true }).click()
+  await expect(win.getByText('meucli')).toBeVisible({ timeout: 10000 })
+  expect(errors.join('\n')).not.toMatch(/Minified React error|Maximum update depth/)
+  await app.close()
+})

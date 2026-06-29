@@ -4,7 +4,9 @@ import type { ProfileEntry } from '@shared/ipc'
 
 export function GlobalProfiles({ onClose }: { onClose: () => void }) {
   const apply = useProject((s) => s.apply)
-  const globals = useProject((s) => s.profiles.filter((p) => p.source === 'global'))
+  // seleciona a ref estável e filtra no corpo: selector retornando .filter() (array novo
+  // a cada render) faz zustand v5 + React 19 entrarem em loop infinito (React #185).
+  const globals = useProject((s) => s.profiles).filter((p) => p.source === 'global')
   const [id, setId] = useState(''); const [command, setCommand] = useState('')
 
   async function save() {
