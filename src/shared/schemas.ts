@@ -32,6 +32,7 @@ const paneConfigSchema = z.object({
   origin: z.enum(['user', 'project']).optional(),
   projectRoot: z.string().optional(),
   parentId: z.string().optional(),
+  autoRestart: z.boolean().optional(),
 })
 const settingsPatchSchema = z.object({
   fontFamily: z.string(),
@@ -60,6 +61,7 @@ export const profileEntrySchema = z.object({
   autoStart: z.boolean().default(false),
   color: z.string().optional(),
   disabled: z.boolean().optional(),
+  autoRestart: z.boolean().optional(),
   discuss: z.object({
     argsTemplate: z.array(z.string()),
     stdin: z.boolean().optional(),
@@ -104,6 +106,13 @@ export const gitPrArgs = z.object({ title: z.string().min(1), body: z.string() }
 export const filesSearchArgs = z.object({ query: z.string(), opts: z.object({ regex: z.boolean(), caseSensitive: z.boolean(), wholeWord: z.boolean() }) })
 export const filesReadArgs = z.object({ path: z.string().min(1) })
 
+export const pinCreateArgs = z.object({ text: z.string().min(1), terminalId: z.string().optional() })
+export const pinUpdateArgs = z.object({ id: z.string().min(1), text: z.string().min(1) })
+export const pinDoneArgs = z.object({ id: z.string().min(1), done: z.boolean() })
+export const pinIdArgs = z.object({ id: z.string().min(1) })
+export const notesSetArgs = z.object({ notes: z.string() })
+export const notesAppendArgs = z.object({ chunk: z.string() })
+
 export const schemaByChannel = {
   'pty:create': ptyCreate,
   'pty:write': ptyWrite,
@@ -132,4 +141,10 @@ export const schemaByChannel = {
   'git:createPR': gitPrArgs,
   'files:search': filesSearchArgs,
   'files:read': filesReadArgs,
+  'pins:create': pinCreateArgs,
+  'pins:update': pinUpdateArgs,
+  'pins:setDone': pinDoneArgs,
+  'pins:delete': pinIdArgs,
+  'notes:set': notesSetArgs,
+  'notes:append': notesAppendArgs,
 } as const

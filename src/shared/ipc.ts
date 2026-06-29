@@ -3,6 +3,7 @@ import type { Discussion, DiscussionEvent, TemplateKind } from './discussion/typ
 import type { QueenInfo } from './queen'
 import type { GitStatus, GitResult, PrResult } from './git'
 import type { SearchFileResult, SearchOptions, FileContent } from './files'
+import type { Pin } from './pins'
 
 export interface ProjectState {
   currentProject: string | null
@@ -50,6 +51,14 @@ export interface IpcRequest {
   'files:list': { args: undefined; result: string[] }
   'files:search': { args: { query: string; opts: SearchOptions }; result: SearchFileResult[] }
   'files:read': { args: { path: string }; result: FileContent }
+  'pins:list': { args: undefined; result: Pin[] }
+  'pins:create': { args: { text: string; terminalId?: string }; result: Pin[] }
+  'pins:update': { args: { id: string; text: string }; result: Pin[] }
+  'pins:setDone': { args: { id: string; done: boolean }; result: Pin[] }
+  'pins:delete': { args: { id: string }; result: Pin[] }
+  'notes:get': { args: undefined; result: string }
+  'notes:set': { args: { notes: string }; result: void }
+  'notes:append': { args: { chunk: string }; result: void }
 }
 export type IpcChannel = keyof IpcRequest
 
@@ -74,3 +83,7 @@ export type { Discussion, DiscussionEvent, TemplateKind }
 export type { QueenInfo } from './queen'
 export type { GitStatus, GitFile, GitResult, PrResult } from './git'
 export type { SearchFileResult, SearchMatch, SearchOptions, FileContent } from './files'
+export type { Pin, PinsData } from './pins'
+
+// `pins:changed` is a raw push channel (main -> renderer, no payload) subscribed
+// via a dedicated preload method (api.onPinsChanged) added in a later task.

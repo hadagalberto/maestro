@@ -12,6 +12,7 @@ export interface PaneConfig {
   origin?: 'user' | 'project'
   projectRoot?: string
   parentId?: string
+  autoRestart?: boolean
 }
 
 // Shape stored in maestro.yml profiles and in globalProfiles. name defaults to the map key.
@@ -24,6 +25,7 @@ export interface ProfileEntry {
   autoStart?: boolean
   color?: string
   disabled?: boolean
+  autoRestart?: boolean
   discuss?: { argsTemplate: string[]; stdin?: boolean; captureMode?: 'pipe' | 'pty'; timeoutMs?: number }
 }
 
