@@ -51,7 +51,7 @@ export interface AppConfig {
   activeLayout: LayoutKind
   panes: PaneConfig[]
   layoutSizes: Record<string, number[]>
-  settings: { fontFamily: string; fontSize: number; scrollback: number; theme: 'system' | 'light' | 'dark' }
+  settings: { fontFamily: string; fontSize: number; scrollback: number; theme: 'system' | 'light' | 'dark'; taskNotify: boolean }
   globalProfiles: Record<string, ProfileEntry>
   recentProjects: string[]
   currentProject: string | null
@@ -63,12 +63,15 @@ export const DEFAULT_CONFIG: AppConfig = {
   activeLayout: 'two',
   panes: [],
   layoutSizes: {},
-  settings: { fontFamily: 'JetBrains Mono, monospace', fontSize: 13, scrollback: 5000, theme: 'system' },
+  settings: { fontFamily: 'JetBrains Mono, monospace', fontSize: 13, scrollback: 5000, theme: 'system', taskNotify: true },
   globalProfiles: {},
   recentProjects: [],
   currentProject: null,
   trust: { trustedFolders: [], deniedFolders: [] },
 }
+
+// Patch aceito por config:set / ConfigStore.set — settings pode ser parcial (merge no store).
+export type ConfigPatch = Partial<Omit<AppConfig, 'settings'>> & { settings?: Partial<AppConfig['settings']> }
 
 export type ConfigProblem =
   | { kind: 'syntax'; line: number; col: number; message: string }

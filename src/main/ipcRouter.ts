@@ -31,6 +31,7 @@ export interface RouterDeps {
   emitPinsChanged: () => void
   currentProjectRoot: () => string | null
   suggestProfile: () => { command: string; args: string[] } | null   // AI cmd+args for commit suggestion
+  notifyTask: (title: string, body: string) => void                  // OS notification (gated in main)
 }
 
 type Handler<C extends IpcChannel> = (args: IpcRequest[C]['args'], e: IpcMainInvokeEvent) => IpcRequest[C]['result'] | Promise<IpcRequest[C]['result']>
@@ -121,6 +122,8 @@ export function registerIpc(deps: RouterDeps): void {
   handle('notes:get', () => { const r = proot(); return r ? deps.pins.getNotes(r) : '' })
   handle('notes:set', (a) => { const r = proot(); if (r) { deps.pins.setNotes(r, a.notes); pinsChanged() } })
   handle('notes:append', (a) => { const r = proot(); if (r) { deps.pins.appendNotes(r, a.chunk); pinsChanged() } })
+
+  handle('app:notify', (a) => { deps.notifyTask(a.title, a.body) })
 }
 
 export function makeSenderGuard(devUrl: string, isPackaged: boolean) {

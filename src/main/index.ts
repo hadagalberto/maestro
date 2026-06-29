@@ -36,7 +36,10 @@ const discussion = new DiscussionRunner({
   projectProfileIds: () => project.projectEntryIds(),
   projectRoot: () => config.get().currentProject,
   isTrusted: (root) => isTrusted(root, config.get().trust),
-  emit: (id, ev) => { if (win && !win.webContents.isDestroyed()) win.webContents.send(discussionEventChannel(id), ev) },
+  emit: (id, ev) => {
+    if (win && !win.webContents.isDestroyed()) win.webContents.send(discussionEventChannel(id), ev)
+    if (ev.type === 'status' && ev.status === 'done') maybeNotify('Maestro — discussão concluída', discussionStore.get(id)?.topic ?? 'discussão')
+  },
   now: () => Date.now(),
   ids: () => randomUUID(),
 })
@@ -47,13 +50,27 @@ const files = new FileService()
 const pins = new PinsStore()
 const emitPinsChanged = () => { if (win && !win.webContents.isDestroyed()) win.webContents.send('pins:changed') }
 ptyHost.onExit = (id, code) => {
+  const node = agentTree.get(id)
   const r = agentTree.markExited(id, code)
-  if (r?.parentId) mailbox.send({ from: 'system', to: r.parentId, text: `agent ${id} exited (code ${code})` })
+  if (r?.parentId) {
+    mailbox.send({ from: 'system', to: r.parentId, text: `agent ${id} exited (code ${code})` })
+    maybeNotify('Maestro — agente concluiu', `${node?.name ?? id} (code ${code})`)
+  }
 }
 const bridge = new RendererBridge(() => win?.webContents ?? null)
 let queen: QueenHandle | null = null
 function queenInfo(): QueenInfo {
   return { running: queen != null, url: queen?.url ?? null, port: queen?.port ?? null, token: queen?.token ?? null }
+}
+
+// OS notification gated centrally: respeita o toggle e só notifica em background.
+function maybeNotify(title: string, body: string): void {
+  if (!config.get().settings.taskNotify) return
+  if (win?.isFocused()) return
+  if (!Notification.isSupported()) return
+  const n = new Notification({ title, body })
+  n.on('click', () => { win?.show(); win?.focus() })
+  n.show()
 }
 
 function appIcon(): string {
@@ -117,6 +134,7 @@ app.whenReady().then(async () => {
       if (!e?.discuss) return null
       return { command: e.command, args: [...(e.args ?? []), ...e.discuss.argsTemplate] }
     },
+    notifyTask: maybeNotify,
   })
   Menu.setApplicationMenu(null)
   createWindow()

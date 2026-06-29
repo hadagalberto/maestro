@@ -1,4 +1,4 @@
-import type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry } from './types'
+import type { AppConfig, PaneConfig, Profile, ConfigProblem, ProfileEntry, ConfigPatch } from './types'
 import type { Discussion, DiscussionEvent, TemplateKind } from './discussion/types'
 import type { QueenInfo } from './queen'
 import type { GitStatus, GitResult, PrResult } from './git'
@@ -20,7 +20,7 @@ export interface IpcRequest {
   'pty:resize': { args: { id: string; cols: number; rows: number }; result: void }
   'pty:kill':   { args: { id: string }; result: void }
   'config:get': { args: undefined; result: AppConfig }
-  'config:set': { args: { patch: Partial<AppConfig> }; result: void }
+  'config:set': { args: { patch: ConfigPatch }; result: void }
   'scrollback:save': { args: { id: string; data: string }; result: void }
   'scrollback:load': { args: { id: string }; result: string | null }
   'shell:openExternal': { args: { url: string }; result: void }
@@ -59,6 +59,7 @@ export interface IpcRequest {
   'notes:get': { args: undefined; result: string }
   'notes:set': { args: { notes: string }; result: void }
   'notes:append': { args: { chunk: string }; result: void }
+  'app:notify': { args: { title: string; body: string; paneId?: string }; result: void }
 }
 export type IpcChannel = keyof IpcRequest
 

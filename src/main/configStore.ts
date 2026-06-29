@@ -1,5 +1,5 @@
 import ElectronStore from 'electron-store'
-import { DEFAULT_CONFIG, type AppConfig, type ProfileEntry, type TrustConfig } from '@shared/types'
+import { DEFAULT_CONFIG, type AppConfig, type ConfigPatch, type ProfileEntry, type TrustConfig } from '@shared/types'
 
 // electron-store v11 is ESM; under the CJS main build the externalized `require`
 // yields the module namespace, so unwrap `.default` to get the real constructor.
@@ -16,7 +16,7 @@ export class ConfigStore {
     return this.migrate(saved)
   }
 
-  set(patch: Partial<AppConfig>): void {
+  set(patch: ConfigPatch): void {
     const cur = this.get()
     const next: AppConfig = {
       ...cur,

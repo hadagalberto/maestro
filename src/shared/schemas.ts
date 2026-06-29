@@ -39,6 +39,7 @@ const settingsPatchSchema = z.object({
   fontSize: z.number(),
   scrollback: z.number(),
   theme: z.enum(['system', 'light', 'dark']),
+  taskNotify: z.boolean(),
 }).partial()
 export const configSet = z.object({
   patch: z.object({
@@ -112,6 +113,7 @@ export const pinDoneArgs = z.object({ id: z.string().min(1), done: z.boolean() }
 export const pinIdArgs = z.object({ id: z.string().min(1) })
 export const notesSetArgs = z.object({ notes: z.string() })
 export const notesAppendArgs = z.object({ chunk: z.string() })
+export const appNotifyArgs = z.object({ title: z.string(), body: z.string(), paneId: z.string().optional() })
 
 export const schemaByChannel = {
   'pty:create': ptyCreate,
@@ -147,4 +149,5 @@ export const schemaByChannel = {
   'pins:delete': pinIdArgs,
   'notes:set': notesSetArgs,
   'notes:append': notesAppendArgs,
+  'app:notify': appNotifyArgs,
 } as const

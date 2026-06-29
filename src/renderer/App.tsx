@@ -44,6 +44,7 @@ export function App() {
   const [showFinder, setShowFinder] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [showPins, setShowPins] = useState(false)
+  const [taskNotify, setTaskNotify] = useState(true)
   const refreshDiscussions = useDiscussions((s) => s.refresh)
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export function App() {
       await hydrateLayoutSizes()
       const cfg: AppConfig = await window.term.invoke('config:get', undefined)
       setLayout(cfg.activeLayout)
+      setTaskNotify(cfg.settings.taskNotify ?? true)
       cfg.panes.forEach(addPane)
       await useProject.getState().hydrate()
       await loadQueenEnv()
@@ -101,6 +103,11 @@ export function App() {
         <button onClick={() => setShowFinder(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Arquivos</button>
         <button onClick={() => setShowSearch(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Buscar</button>
         <button onClick={() => setShowPins(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Pins</button>
+        <button
+          onClick={() => { const v = !taskNotify; setTaskNotify(v); void window.term.invoke('config:set', { patch: { settings: { taskNotify: v } } }) }}
+          title="Notificar quando a IA concluir uma tarefa (só com a janela em background)"
+          className="ml-auto rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200"
+        >{taskNotify ? '🔔' : '🔕'} Notif</button>
       </div>
       <Toolbar onPickProfile={pickProfile} />
       <div className="flex min-h-0 flex-1">

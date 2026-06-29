@@ -13,15 +13,23 @@ import { canEnableWebgl, releaseWebgl } from './webglPool'
 import { registerTerminalReader, unregisterTerminalReader } from '../queen/terminalRegistry'
 import { useGrid } from '../store/gridStore'
 import { nextRestart } from '../reliability/restart'
+import { initialArm, armOnInput, noteOutput, onIdle } from '../notify/taskSignal'
+
+const IDLE_MS = 4000
 
 export function TerminalPane({ pane }: { pane: PaneConfig }) {
   const host = useRef<HTMLDivElement>(null)
   const restarts = useRef(0)
+  const arm = useRef(initialArm())
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const el = host.current
     if (!el) return
     let disposed = false
+    const fireTaskDone = () => {
+      void window.term.invoke('app:notify', { title: 'Maestro — tarefa concluída', body: pane.name ?? pane.command, paneId: pane.id })
+    }
     const term = new Terminal({
       fontFamily: 'JetBrains Mono, monospace', fontSize: 13,
       scrollback: 5000, allowProposedApi: true, theme: darkTheme,
@@ -61,8 +69,22 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
         }
       }
 
-      cleanupData = window.term.onPtyData(pane.id, ({ data }) => term.write(data))
+      cleanupData = window.term.onPtyData(pane.id, ({ data }) => {
+        term.write(data)
+        arm.current = noteOutput(arm.current)
+        if (idleTimer.current) clearTimeout(idleTimer.current)
+        idleTimer.current = setTimeout(() => {
+          const { fire, next } = onIdle(arm.current); arm.current = next
+          if (fire) fireTaskDone()
+        }, IDLE_MS)
+      })
+      // sinais explícitos do CLI: bell + OSC 9 (iTerm/WT, ignora 9;4 progress) + OSC 777
+      term.onBell(() => fireTaskDone())
+      term.parser.registerOscHandler(9, (data) => { if (!data.startsWith('4;')) fireTaskDone(); return true })
+      term.parser.registerOscHandler(777, () => { fireTaskDone(); return true })
       cleanupExit = window.term.onPtyExit(pane.id, ({ code, reason }) => {
+        if (idleTimer.current) { clearTimeout(idleTimer.current); idleTimer.current = null }
+        arm.current = initialArm()
         useGrid.getState().setExited(pane.id, code)
         const { restart, delayMs } = nextRestart(pane.autoRestart, code, restarts.current)
         if (restart) {
@@ -73,7 +95,7 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
           term.writeln(`\r\n\x1b[31m[processo terminou code=${code}${reason ? ' ' + reason : ''}]\x1b[0m`)
         }
       })
-      term.onData((d) => { void window.term.invoke('pty:write', { id: pane.id, data: d }) })
+      term.onData((d) => { arm.current = armOnInput(); void window.term.invoke('pty:write', { id: pane.id, data: d }) })
 
       try {
         await window.term.invoke('pty:create', {
@@ -101,6 +123,7 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
 
     return () => {
       disposed = true
+      if (idleTimer.current) clearTimeout(idleTimer.current)
       ro.disconnect()
       el.removeEventListener('mousedown', focusOnDown)
       void window.term.invoke('scrollback:save', { id: pane.id, data: serialize.serialize() })
