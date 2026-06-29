@@ -11,6 +11,9 @@ import { DiscussionList } from './ui/DiscussionList'
 import { DiscussionView } from './ui/DiscussionView'
 import { QueenPanel } from './ui/QueenPanel'
 import { GitPanel } from './ui/GitPanel'
+import { FileFinder } from './ui/FileFinder'
+import { SearchPanel } from './ui/SearchPanel'
+import { FileViewer } from './ui/FileViewer'
 import { Grid } from './grid/Grid'
 import { useGrid } from './store/gridStore'
 import { useProject } from './store/projectStore'
@@ -36,6 +39,8 @@ export function App() {
   const [showDiscussions, setShowDiscussions] = useState(false)
   const [showQueen, setShowQueen] = useState(false)
   const [showGit, setShowGit] = useState(false)
+  const [showFinder, setShowFinder] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
   const refreshDiscussions = useDiscussions((s) => s.refresh)
 
   useEffect(() => {
@@ -54,6 +59,15 @@ export function App() {
   }, [addPane, setLayout])
 
   useEffect(() => { autoStarted.current = new Set() }, [project.currentProject])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); setShowFinder(true) }
+      else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') { e.preventDefault(); setShowSearch(true) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
   useEffect(() => { if (!hydrated.current) return; void window.term.invoke('config:set', { patch: { panes, activeLayout: useGrid.getState().activeLayout } }) }, [panes])
 
   function paneFromProfile(p: Profile, parentId?: string): PaneConfig {
@@ -80,6 +94,8 @@ export function App() {
         <button onClick={() => setShowModal(true)} className="rounded bg-amber-700/70 px-2 py-0.5 text-xs text-white">+ discussão</button>
         <button onClick={() => setShowQueen(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Queen</button>
         <button onClick={() => setShowGit(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Git</button>
+        <button onClick={() => setShowFinder(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Arquivos</button>
+        <button onClick={() => setShowSearch(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Buscar</button>
       </div>
       <Toolbar onPickProfile={pickProfile} />
       <div className="flex min-h-0 flex-1">
@@ -93,6 +109,9 @@ export function App() {
       {showModal && <NewDiscussionModal onClose={() => setShowModal(false)} onStarted={(id) => { setShowModal(false); setShowDiscussions(true); setOpenId(id); void refreshDiscussions() }} />}
       {showQueen && <QueenPanel onClose={() => setShowQueen(false)} />}
       {showGit && <GitPanel onClose={() => setShowGit(false)} />}
+      {showFinder && <FileFinder onClose={() => setShowFinder(false)} />}
+      {showSearch && <SearchPanel onClose={() => setShowSearch(false)} />}
+      <FileViewer />
     </div>
   )
 }
