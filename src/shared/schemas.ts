@@ -40,6 +40,7 @@ const settingsPatchSchema = z.object({
   scrollback: z.number(),
   theme: z.enum(['system', 'light', 'dark']),
   taskNotify: z.boolean(),
+  queenPort: z.number().int().min(0).max(65535),
 }).partial()
 export const configSet = z.object({
   patch: z.object({

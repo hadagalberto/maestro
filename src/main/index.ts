@@ -10,6 +10,7 @@ import { DiscussionRunner } from './discussion/discussionRunner'
 import { CliAdapter } from './discussion/cliAdapter'
 import { isTrusted } from './trust'
 import { startQueen, type QueenHandle } from './queen/server'
+import { QueenAuth } from './queen/auth'
 import { RendererBridge } from './queen/rendererBridge'
 import { Mailbox } from './queen/mailbox'
 import { AgentTree } from './queen/agentTree'
@@ -139,7 +140,7 @@ app.whenReady().then(async () => {
     agentTree,
     pins,
     onPinsChanged: emitPinsChanged,
-  })
+  }, new QueenAuth(config.getOrCreateQueenToken()), { port: config.get().settings.queenPort })
   // publish url+token for agents/users (the panel references this file)
   try {
     const queenFile = join(app.getPath('userData'), 'queen.json')

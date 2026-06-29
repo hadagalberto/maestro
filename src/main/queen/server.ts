@@ -17,7 +17,7 @@ async function readBody(req: http.IncomingMessage): Promise<unknown> {
   return raw ? JSON.parse(raw) : undefined
 }
 
-export async function startQueen(deps: QueenToolDeps, auth = new QueenAuth()): Promise<QueenHandle> {
+export async function startQueen(deps: QueenToolDeps, auth = new QueenAuth(), opts: { port?: number } = {}): Promise<QueenHandle> {
   const sessions = new Map<string, Session>()
   let port = 0
 
@@ -55,7 +55,18 @@ export async function startQueen(deps: QueenToolDeps, auth = new QueenAuth()): P
     }
   })
 
-  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
+  // porta fixa (opts.port) com fallback p/ efêmera se estiver ocupada — nunca falha em subir
+  const listen = (p: number) => new Promise<void>((res, rej) => {
+    const onErr = (e: NodeJS.ErrnoException) => rej(e)
+    server.once('error', onErr)
+    server.listen(p, '127.0.0.1', () => { server.off('error', onErr); res() })
+  })
+  const desired = opts.port ?? 0
+  try { await listen(desired) }
+  catch (e) {
+    if (desired !== 0 && (e as NodeJS.ErrnoException).code === 'EADDRINUSE') await listen(0)
+    else throw e
+  }
   port = (server.address() as import('node:net').AddressInfo).port
   const url = `http://127.0.0.1:${port}/mcp`
 

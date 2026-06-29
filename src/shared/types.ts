@@ -51,11 +51,12 @@ export interface AppConfig {
   activeLayout: LayoutKind
   panes: PaneConfig[]
   layoutSizes: Record<string, number[]>
-  settings: { fontFamily: string; fontSize: number; scrollback: number; theme: 'system' | 'light' | 'dark'; taskNotify: boolean }
+  settings: { fontFamily: string; fontSize: number; scrollback: number; theme: 'system' | 'light' | 'dark'; taskNotify: boolean; queenPort: number }
   globalProfiles: Record<string, ProfileEntry>
   recentProjects: string[]
   currentProject: string | null
   trust: TrustConfig
+  queenToken?: string   // token estável e persistido da Queen (gerado uma vez); main-only
 }
 
 export const DEFAULT_CONFIG: AppConfig = {
@@ -63,7 +64,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   activeLayout: 'two',
   panes: [],
   layoutSizes: {},
-  settings: { fontFamily: 'JetBrains Mono, monospace', fontSize: 13, scrollback: 5000, theme: 'system', taskNotify: true },
+  settings: { fontFamily: 'JetBrains Mono, monospace', fontSize: 13, scrollback: 5000, theme: 'system', taskNotify: true, queenPort: 4517 },
   globalProfiles: {},
   recentProjects: [],
   currentProject: null,

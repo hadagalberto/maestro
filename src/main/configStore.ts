@@ -1,4 +1,5 @@
 import ElectronStore from 'electron-store'
+import { randomBytes } from 'node:crypto'
 import { DEFAULT_CONFIG, type AppConfig, type ConfigPatch, type ProfileEntry, type TrustConfig } from '@shared/types'
 
 // electron-store v11 is ESM; under the CJS main build the externalized `require`
@@ -28,6 +29,15 @@ export class ConfigStore {
   }
 
   setGlobalProfiles(profiles: Record<string, ProfileEntry>): void { this.set({ globalProfiles: profiles }) }
+
+  // Token estável da Queen: gera uma vez e persiste; reusa nos próximos launches.
+  getOrCreateQueenToken(): string {
+    const cur = this.get().queenToken
+    if (cur) return cur
+    const token = randomBytes(24).toString('hex')
+    this.set({ queenToken: token })
+    return token
+  }
 
   pushRecentProject(p: string): void {
     const cur = this.get()

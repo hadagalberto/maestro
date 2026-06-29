@@ -34,4 +34,14 @@ describe('ConfigStore v2', () => {
     cs.grantTrust('/a'); expect(cs.get().trust.trustedFolders).toContain('/a')
     cs.revokeTrust('/a'); expect(cs.get().trust.trustedFolders).not.toContain('/a')
   })
+  it('getOrCreateQueenToken gera uma vez e reusa', () => {
+    const cs = new ConfigStore()
+    const t1 = cs.getOrCreateQueenToken()
+    expect(t1).toMatch(/^[0-9a-f]{48}$/)
+    expect(cs.getOrCreateQueenToken()).toBe(t1)
+    expect(cs.get().queenToken).toBe(t1)
+  })
+  it('queenPort default 4517', () => {
+    expect(new ConfigStore().get().settings.queenPort).toBe(4517)
+  })
 })
