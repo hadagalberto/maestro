@@ -1,4 +1,4 @@
-import { app, BrowserWindow, session, Notification } from 'electron'
+import { app, BrowserWindow, Menu, session, Notification } from 'electron'
 import { join } from 'node:path'
 import { writeFileSync, rmSync } from 'node:fs'
 import { ConfigStore } from './configStore'
@@ -118,6 +118,7 @@ app.whenReady().then(async () => {
       return { command: e.command, args: [...(e.args ?? []), ...e.discuss.argsTemplate] }
     },
   })
+  Menu.setApplicationMenu(null)
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })
