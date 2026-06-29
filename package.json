@@ -1,6 +1,6 @@
 {
   "name": "maestro",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Desktop app para orquestrar CLIs de IA em grid de terminais",
   "main": "out/main/index.js",
   "bin": {
