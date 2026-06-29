@@ -11,6 +11,7 @@ import { CliAdapter } from './discussion/cliAdapter'
 import { isTrusted } from './trust'
 import { startQueen, type QueenHandle } from './queen/server'
 import { QueenAuth } from './queen/auth'
+import { autoUpdater } from 'electron-updater'
 import { RendererBridge } from './queen/rendererBridge'
 import { Mailbox } from './queen/mailbox'
 import { AgentTree } from './queen/agentTree'
@@ -75,6 +76,16 @@ function maybeNotify(title: string, body: string): void {
   const n = new Notification({ title, body })
   n.on('click', () => { win?.show(); win?.focus() })
   n.show()
+}
+
+function setupAutoUpdate(): void {
+  if (!app.isPackaged) return // dev não tem app-update.yml; só no app empacotado
+  autoUpdater.on('error', (e) => console.error('[auto-update]', e))
+  autoUpdater.on('update-downloaded', (info) => {
+    new Notification({ title: 'Maestro', body: `Atualização ${info.version} baixada — será instalada ao fechar o app.` }).show()
+  })
+  void autoUpdater.checkForUpdatesAndNotify()
+  setInterval(() => { void autoUpdater.checkForUpdates() }, 4 * 60 * 60 * 1000) // re-checa a cada 4h
 }
 
 function appIcon(): string {
@@ -176,6 +187,7 @@ app.whenReady().then(async () => {
   Menu.setApplicationMenu(null)
   createWindow()
   openProjectFromArgs(process.argv, process.cwd())
+  setupAutoUpdate()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })
 
