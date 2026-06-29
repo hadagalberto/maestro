@@ -27,8 +27,9 @@ mac:
   target: [dmg, zip]
   icon: build/icon.png
 linux:
-  target: [AppImage, deb]
+  target: [AppImage]
   icon: build/icon.png
+  category: Development
 publish:
   provider: github
   owner: hadagalberto
