@@ -14,10 +14,12 @@ import { GitPanel } from './ui/GitPanel'
 import { FileFinder } from './ui/FileFinder'
 import { SearchPanel } from './ui/SearchPanel'
 import { FileViewer } from './ui/FileViewer'
+import { PinsPanel } from './ui/PinsPanel'
 import { Grid } from './grid/Grid'
 import { useGrid } from './store/gridStore'
 import { useProject } from './store/projectStore'
 import { useDiscussions } from './store/discussionStore'
+import { usePins } from './store/pinsStore'
 import { mountQueenBridge } from './queen/queenBridge'
 import { loadQueenEnv, queenEnv } from './queen/queenInfo'
 import { hydrateLayoutSizes } from './grid/layoutStorage'
@@ -41,6 +43,7 @@ export function App() {
   const [showGit, setShowGit] = useState(false)
   const [showFinder, setShowFinder] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
+  const [showPins, setShowPins] = useState(false)
   const refreshDiscussions = useDiscussions((s) => s.refresh)
 
   useEffect(() => {
@@ -55,7 +58,8 @@ export function App() {
     })()
     const offProject = window.term.on('project:changed', (s: ProjectState) => useProject.getState().apply(s))
     const offQueen = mountQueenBridge()
-    return () => { offProject(); offQueen() }
+    const offPins = window.term.onPinsChanged(() => void usePins.getState().refresh())
+    return () => { offProject(); offQueen(); offPins() }
   }, [addPane, setLayout])
 
   useEffect(() => { autoStarted.current = new Set() }, [project.currentProject])
@@ -96,6 +100,7 @@ export function App() {
         <button onClick={() => setShowGit(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Git</button>
         <button onClick={() => setShowFinder(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Arquivos</button>
         <button onClick={() => setShowSearch(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Buscar</button>
+        <button onClick={() => setShowPins(true)} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200">Pins</button>
       </div>
       <Toolbar onPickProfile={pickProfile} />
       <div className="flex min-h-0 flex-1">
@@ -111,6 +116,7 @@ export function App() {
       {showGit && <GitPanel onClose={() => setShowGit(false)} />}
       {showFinder && <FileFinder onClose={() => setShowFinder(false)} />}
       {showSearch && <SearchPanel onClose={() => setShowSearch(false)} />}
+      {showPins && <PinsPanel onClose={() => setShowPins(false)} />}
       <FileViewer />
     </div>
   )
