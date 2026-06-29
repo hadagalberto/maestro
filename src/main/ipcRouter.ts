@@ -11,6 +11,7 @@ import { DiscussionRunner } from './discussion/discussionRunner'
 import { DiscussionStore } from './discussion/discussionStore'
 import type { AgentTree } from './queen/agentTree'
 import type { GitService } from './git/gitService'
+import type { FileService } from './files/fileService'
 
 export interface RouterDeps {
   config: ConfigStore
@@ -24,6 +25,7 @@ export interface RouterDeps {
   queenInfo: () => QueenInfo
   bridge: { handleResponse: (r: QueenResponse) => void }
   git: GitService
+  files: FileService
   currentProjectRoot: () => string | null
   suggestProfile: () => { command: string; args: string[] } | null   // AI cmd+args for commit suggestion
 }
@@ -101,6 +103,10 @@ export function registerIpc(deps: RouterDeps): void {
     const p = deps.suggestProfile(); if (!p) return { message: '' }
     return { message: await deps.git.suggestCommit(r, p.command, p.args) }
   })
+
+  handle('files:list', async () => { const r = deps.currentProjectRoot(); return r ? deps.files.listFiles(r) : [] })
+  handle('files:search', async (a) => { const r = deps.currentProjectRoot(); if (!r) return []; try { return await deps.files.search(r, a.query, a.opts) } catch { return [] } })
+  handle('files:read', async (a) => { const r = deps.currentProjectRoot(); return r ? deps.files.read(r, a.path) : { path: a.path, content: '', truncated: false, binary: false } })
 }
 
 export function makeSenderGuard(devUrl: string, isPackaged: boolean) {

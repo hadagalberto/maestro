@@ -14,6 +14,7 @@ import { RendererBridge } from './queen/rendererBridge'
 import { Mailbox } from './queen/mailbox'
 import { AgentTree } from './queen/agentTree'
 import { GitService } from './git/gitService'
+import { FileService } from './files/fileService'
 import { discussionEventChannel, type ProjectState } from '@shared/ipc'
 import type { QueenInfo } from '@shared/queen'
 import { randomUUID } from 'node:crypto'
@@ -41,6 +42,7 @@ const discussion = new DiscussionRunner({
 const mailbox = new Mailbox()
 const agentTree = new AgentTree()
 const git = new GitService()
+const files = new FileService()
 ptyHost.onExit = (id, code) => {
   const r = agentTree.markExited(id, code)
   if (r?.parentId) mailbox.send({ from: 'system', to: r.parentId, text: `agent ${id} exited (code ${code})` })
@@ -94,6 +96,7 @@ app.whenReady().then(async () => {
     queenInfo,
     bridge,
     git,
+    files,
     currentProjectRoot: () => config.get().currentProject,
     suggestProfile: () => {
       const entries = project.effectiveEntries()
