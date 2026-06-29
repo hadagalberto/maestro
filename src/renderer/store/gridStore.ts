@@ -12,6 +12,7 @@ interface GridState {
   removePaneTree: (id: string) => string[]
   setActive: (id: string) => void
   setExited: (id: string, code: number) => void
+  clearExited: (id: string) => void
 }
 
 export const useGrid = create<GridState>((set, get) => ({
@@ -35,4 +36,5 @@ export const useGrid = create<GridState>((set, get) => ({
   },
   setActive: (activePaneId) => set({ activePaneId }),
   setExited: (id, code) => set((s) => ({ exited: { ...s.exited, [id]: code } })),
+  clearExited: (id) => set((s) => { const e = { ...s.exited }; delete e[id]; return { exited: e } }),
 }))

@@ -3,7 +3,6 @@ import { randomUUID } from 'node:crypto'
 import type { Pin, PinsData } from '@shared/pins'
 
 const Store = (ElectronStore as unknown as { default?: typeof ElectronStore }).default ?? ElectronStore
-const EMPTY: PinsData = { pins: [], notes: '' }
 const CAP = 500
 
 export class PinsStore {
@@ -11,7 +10,7 @@ export class PinsStore {
   private all(): Record<string, PinsData> { return this.store.get('byProject') ?? {} }
   private save(root: string, d: PinsData): void { const all = this.all(); all[root] = d; this.store.set('byProject', all) }
 
-  get(root: string): PinsData { return this.all()[root] ?? EMPTY }
+  get(root: string): PinsData { return this.all()[root] ?? { pins: [], notes: '' } }
   listPins(root: string): Pin[] { return this.get(root).pins }
   createPin(root: string, text: string, terminalId?: string): Pin {
     const d = this.get(root)

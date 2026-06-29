@@ -35,7 +35,8 @@ async function handle(req: QueenRequest): Promise<unknown> {
     }
     case 'terminals.kill': {
       const id = (req.args as { id: string }).id
-      grid.removePane(id); void window.term.invoke('pty:kill', { id })
+      const ids = grid.removePaneTree(id)
+      for (const i of ids) void window.term.invoke('pty:kill', { id: i })
       return { ok: true }
     }
     case 'terminals.read': {

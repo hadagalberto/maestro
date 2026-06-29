@@ -32,4 +32,9 @@ describe('PinsStore', () => {
     s.appendNotes('/a', 'linha2'); expect(s.getNotes('/a')).toBe('linha1\nlinha2')
     s.appendNotes('/b', 'só'); expect(s.getNotes('/b')).toBe('só')
   })
+  it('respeita o CAP de 500 pins', () => {
+    const s = new PinsStore()
+    for (let i = 0; i < 510; i++) s.createPin('/a', `p${i}`)
+    expect(s.listPins('/a')).toHaveLength(500)
+  })
 })

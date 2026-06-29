@@ -68,7 +68,7 @@ export function TerminalPane({ pane }: { pane: PaneConfig }) {
         if (restart) {
           restarts.current += 1
           term.writeln(`\r\n\x1b[33m[reiniciando ${restarts.current}/3 em ${delayMs}ms…]\x1b[0m`)
-          setTimeout(() => { if (!disposed) void window.term.invoke('pty:create', { id: pane.id, command: pane.command, args: pane.args, cwd: pane.cwd, env: pane.env, cols: term.cols, rows: term.rows, origin: pane.origin ?? 'user', projectRoot: pane.projectRoot, name: pane.name, parentId: pane.parentId }) }, delayMs)
+          setTimeout(() => { if (!disposed) { useGrid.getState().clearExited(pane.id); void window.term.invoke('pty:create', { id: pane.id, command: pane.command, args: pane.args, cwd: pane.cwd, env: pane.env, cols: term.cols, rows: term.rows, origin: pane.origin ?? 'user', projectRoot: pane.projectRoot, name: pane.name, parentId: pane.parentId }) } }, delayMs)
         } else {
           term.writeln(`\r\n\x1b[31m[processo terminou code=${code}${reason ? ' ' + reason : ''}]\x1b[0m`)
         }
