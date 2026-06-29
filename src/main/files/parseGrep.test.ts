@@ -18,4 +18,10 @@ describe('parseGrep', () => {
     const r = parseGrep(lines, 3)
     expect(r[0].matches).toHaveLength(3)
   })
+  it('lida com CRLF (strip do \\r final)', () => {
+    expect(parseGrep('a.ts:1:hello\r\nb.ts:2:world\r\n')).toEqual([
+      { path: 'a.ts', matches: [{ line: 1, text: 'hello' }] },
+      { path: 'b.ts', matches: [{ line: 2, text: 'world' }] },
+    ])
+  })
 })

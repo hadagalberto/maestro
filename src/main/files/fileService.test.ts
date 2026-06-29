@@ -26,4 +26,9 @@ describe('FileService', () => {
     const c = cap((a) => { if (a.includes('rev-parse')) return { stdout: 'true' }; if (a[0] === 'grep') return { code: 1 }; return {} })
     expect(await svc(c).search('/r', 'zzz', { regex: false, caseSensitive: false, wholeWord: false })).toEqual([])
   })
+  it('read rejeita path fora do projeto', async () => {
+    const c = cap(() => ({}))
+    const r = await svc(c).read('/proj', '../../etc/passwd')
+    expect(r.content).toContain('fora do projeto')
+  })
 })

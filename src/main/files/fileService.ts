@@ -1,6 +1,6 @@
 import which from 'which'
 import { readFile, readdir } from 'node:fs/promises'
-import { join, relative, sep } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 import { captureOnce, type CaptureResult } from '../discussion/captureOnce'
 import { parseGrep } from './parseGrep'
 import type { SearchFileResult, SearchOptions, FileContent } from '@shared/files'
@@ -82,7 +82,11 @@ export class FileService {
   }
 
   async read(root: string, relPath: string): Promise<FileContent> {
-    const full = join(root, relPath)
+    const base = resolve(root)
+    const full = resolve(base, relPath)
+    if (full !== base && !full.startsWith(base + sep)) {
+      return { path: relPath, content: 'caminho fora do projeto', truncated: false, binary: false }
+    }
     let buf: Buffer
     try { buf = await readFile(full) } catch (e) { return { path: relPath, content: `erro: ${(e as Error).message}`, truncated: false, binary: false } }
     const head = buf.subarray(0, 8192)
