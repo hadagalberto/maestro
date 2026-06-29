@@ -20,6 +20,7 @@ import { discussionEventChannel, type ProjectState } from '@shared/ipc'
 import type { QueenInfo } from '@shared/queen'
 import { randomUUID } from 'node:crypto'
 import { projectPathFromArgs, userArgs } from './cliArgs'
+import { applyMcp } from './mcp/inject'
 
 const DEV_URL = process.env['ELECTRON_RENDERER_URL'] ?? 'http://localhost:5173'
 const scrollbackMem = new Map<string, string>()
@@ -60,8 +61,9 @@ ptyHost.onExit = (id, code) => {
 }
 const bridge = new RendererBridge(() => win?.webContents ?? null)
 let queen: QueenHandle | null = null
+let mcpConfigPath: string | null = null
 function queenInfo(): QueenInfo {
-  return { running: queen != null, url: queen?.url ?? null, port: queen?.port ?? null, token: queen?.token ?? null }
+  return { running: queen != null, url: queen?.url ?? null, port: queen?.port ?? null, token: queen?.token ?? null, mcpConfigPath }
 }
 
 // OS notification gated centrally: respeita o toggle e só notifica em background.
@@ -143,6 +145,13 @@ app.whenReady().then(async () => {
     const queenFile = join(app.getPath('userData'), 'queen.json')
     writeFileSync(queenFile, JSON.stringify({ url: queen.url, token: queen.token }, null, 2), { mode: 0o600 })
   } catch { /* non-fatal */ }
+  // arquivo de config MCP (estático, usa ${VAR} expandido pelo CLI a partir do env do
+  // painel) — painéis claude recebem --mcp-config <este arquivo> e já abrem conectados.
+  try {
+    const f = join(app.getPath('userData'), 'mcp-maestro.json')
+    writeFileSync(f, JSON.stringify({ mcpServers: { maestro: { type: 'http', url: '${MAESTRO_MCP_URL}', headers: { Authorization: 'Bearer ${MAESTRO_MCP_TOKEN}' } } } }, null, 2))
+    mcpConfigPath = f
+  } catch { /* non-fatal */ }
   registerIpc({
     config, ptyHost, project, discussion, discussionStore, agentTree,
     isTrustedSender: makeSenderGuard(DEV_URL, app.isPackaged),
@@ -161,6 +170,7 @@ app.whenReady().then(async () => {
       return { command: e.command, args: [...(e.args ?? []), ...e.discuss.argsTemplate] }
     },
     notifyTask: maybeNotify,
+    mcpAugment: (command, cwd) => applyMcp(command, cwd, queen ? { url: queen.url, token: queen.token } : null, mcpConfigPath),
   })
   Menu.setApplicationMenu(null)
   createWindow()
@@ -171,5 +181,6 @@ app.whenReady().then(async () => {
 app.on('before-quit', () => {
   ptyHost.dispose(); project.stop(); discussion.abortAll(); void queen?.close()
   try { rmSync(join(app.getPath('userData'), 'queen.json'), { force: true }) } catch { /* ignore */ }
+  try { rmSync(join(app.getPath('userData'), 'mcp-maestro.json'), { force: true }) } catch { /* ignore */ }
 })
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })

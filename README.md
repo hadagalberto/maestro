@@ -80,6 +80,8 @@ A pasta precisa ser **confiável** para rodar perfis de origem-projeto (a UI ped
 
 Cada terminal recebe `MAESTRO_MCP_URL` / `MAESTRO_MCP_TOKEN` no ambiente. Um agente de IA conecta nesse servidor MCP local para listar/abrir/escrever em terminais, iniciar discussões, spawnar sub-agentes e ler/escrever pins & notes. O painel **Queen** mostra a URL, o token e um snippet de conexão.
 
+**Auto-conexão:** ao abrir um terminal, o Maestro já configura o CLI para conectar na Queen, com a estratégia que cada um suporta de forma não-interativa — `claude` via `--mcp-config`, `codex` via `-c mcp_servers`, `opencode` via `OPENCODE_CONFIG_CONTENT`, e `gemini`/`amp`/`antigravity` escrevendo um arquivo de config por-projeto (merge-safe, adicionado ao `.gitignore`). O token vem do ambiente (`${MAESTRO_MCP_TOKEN}`), nunca do argv — exceto no Antigravity, que não expande env e recebe o token no arquivo gitignored.
+
 ## 🛠️ Desenvolvimento
 
 | Script | O que faz |

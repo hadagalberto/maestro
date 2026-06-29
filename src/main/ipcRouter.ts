@@ -32,6 +32,7 @@ export interface RouterDeps {
   currentProjectRoot: () => string | null
   suggestProfile: () => { command: string; args: string[] } | null   // AI cmd+args for commit suggestion
   notifyTask: (title: string, body: string) => void                  // OS notification (gated in main)
+  mcpAugment: (command: string, cwd: string) => { args: string[]; env: Record<string, string> }  // auto-conecta CLI na Queen
 }
 
 type Handler<C extends IpcChannel> = (args: IpcRequest[C]['args'], e: IpcMainInvokeEvent) => IpcRequest[C]['result'] | Promise<IpcRequest[C]['result']>
@@ -54,7 +55,11 @@ export function registerIpc(deps: RouterDeps): void {
         err.code = TRUST_REQUIRED; err.projectRoot = canonical(root); throw err
       }
     }
-    deps.ptyHost.spawn(a)
+    const aug = deps.mcpAugment(a.command, a.cwd)
+    const spawn = aug.args.length || Object.keys(aug.env).length
+      ? { ...a, args: [...(a.args ?? []), ...aug.args], env: { ...a.env, ...aug.env } }
+      : a
+    deps.ptyHost.spawn(spawn)
     deps.agentTree.open({ id: a.id, name: a.name ?? a.command, command: a.command, parentId: a.parentId })
   })
   handle('pty:write', (a) => { deps.ptyHost.write(a.id, a.data) })
