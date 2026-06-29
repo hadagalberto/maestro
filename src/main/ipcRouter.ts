@@ -12,6 +12,7 @@ import { DiscussionStore } from './discussion/discussionStore'
 import type { AgentTree } from './queen/agentTree'
 import type { GitService } from './git/gitService'
 import type { FileService } from './files/fileService'
+import type { PinsStore } from './pins/pinsStore'
 
 export interface RouterDeps {
   config: ConfigStore
@@ -26,6 +27,8 @@ export interface RouterDeps {
   bridge: { handleResponse: (r: QueenResponse) => void }
   git: GitService
   files: FileService
+  pins: PinsStore
+  emitPinsChanged: () => void
   currentProjectRoot: () => string | null
   suggestProfile: () => { command: string; args: string[] } | null   // AI cmd+args for commit suggestion
 }
@@ -107,6 +110,17 @@ export function registerIpc(deps: RouterDeps): void {
   handle('files:list', async () => { const r = deps.currentProjectRoot(); return r ? deps.files.listFiles(r) : [] })
   handle('files:search', async (a) => { const r = deps.currentProjectRoot(); if (!r) return []; try { return await deps.files.search(r, a.query, a.opts) } catch { return [] } })
   handle('files:read', async (a) => { const r = deps.currentProjectRoot(); return r ? deps.files.read(r, a.path) : { path: a.path, content: '', truncated: false, binary: false } })
+
+  const proot = () => deps.currentProjectRoot()
+  const pinsChanged = () => deps.emitPinsChanged()
+  handle('pins:list', () => { const r = proot(); return r ? deps.pins.listPins(r) : [] })
+  handle('pins:create', (a) => { const r = proot(); if (r) { deps.pins.createPin(r, a.text, a.terminalId); pinsChanged() } return r ? deps.pins.listPins(r) : [] })
+  handle('pins:update', (a) => { const r = proot(); if (r) { deps.pins.updatePin(r, a.id, a.text); pinsChanged() } return r ? deps.pins.listPins(r) : [] })
+  handle('pins:setDone', (a) => { const r = proot(); if (r) { deps.pins.setPinDone(r, a.id, a.done); pinsChanged() } return r ? deps.pins.listPins(r) : [] })
+  handle('pins:delete', (a) => { const r = proot(); if (r) { deps.pins.deletePin(r, a.id); pinsChanged() } return r ? deps.pins.listPins(r) : [] })
+  handle('notes:get', () => { const r = proot(); return r ? deps.pins.getNotes(r) : '' })
+  handle('notes:set', (a) => { const r = proot(); if (r) { deps.pins.setNotes(r, a.notes); pinsChanged() } })
+  handle('notes:append', (a) => { const r = proot(); if (r) { deps.pins.appendNotes(r, a.chunk); pinsChanged() } })
 }
 
 export function makeSenderGuard(devUrl: string, isPackaged: boolean) {

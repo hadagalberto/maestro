@@ -102,6 +102,8 @@ app.whenReady().then(async () => {
     bridge,
     git,
     files,
+    pins,
+    emitPinsChanged,
     currentProjectRoot: () => config.get().currentProject,
     suggestProfile: () => {
       const entries = project.effectiveEntries()

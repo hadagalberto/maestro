@@ -31,6 +31,11 @@ const api = {
     return () => ipcRenderer.removeListener('queen:req', h)
   },
   queenRespond(res: import('@shared/queen').QueenResponse): void { ipcRenderer.send('queen:res', res) },
+  onPinsChanged(cb: () => void): () => void {
+    const h = () => cb()
+    ipcRenderer.on('pins:changed', h)
+    return () => ipcRenderer.removeListener('pins:changed', h)
+  },
 }
 
 contextBridge.exposeInMainWorld('term', api)
